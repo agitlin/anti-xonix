@@ -17,9 +17,40 @@
       <h1 id="collision-msg" class="retro-text">BOGUS!</h1>
       <p class="retro-subtext">PRESS SPACE TO RESUME</p>
     </div>
+    
+    <div id="hof-overlay" style="display: none;">
+      <h1 class="retro-text" style="font-size: 40px; color: #ffeb3b; text-shadow: 2px 2px #ff9800;">HALL OF FAME</h1>
+      
+      <div id="hof-input-section" style="display: none;">
+        <p class="retro-subtext" style="color: #00e5ff; margin-bottom: 5px;">NEW HIGH SCORE!</p>
+        <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+          <input type="text" id="hof-initials" maxlength="3" autocomplete="off" placeholder="AAA" />
+          <button id="hof-submit">SAVE</button>
+        </div>
+      </div>
+
+      <table id="hof-table">
+        <thead>
+          <tr>
+            <th>RNK</th>
+            <th>NAME</th>
+            <th>SCORE</th>
+            <th>LVL</th>
+          </tr>
+        </thead>
+        <tbody id="hof-body">
+        </tbody>
+      </table>
+      
+      <button id="hof-close-btn">CONTINUE</button>
+    </div>
+
     <div id="game-over" style="display: none;">
       <h1 id="game-over-text">Game Over</h1>
       <button id="restart-btn">Restart</button>
+      <div style="margin-top: 10px;">
+        <button id="show-hof-btn" style="font-size: 16px; padding: 5px 10px;">View Hall of Fame</button>
+      </div>
     </div>
     <script type="module" src="./main.js"></script>
   </body>

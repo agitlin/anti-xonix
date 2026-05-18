@@ -12,6 +12,69 @@ const restartBtn = document.getElementById('restart-btn');
 const uiCollisionOverlay = document.getElementById('collision-overlay');
 const uiCollisionMsg = document.getElementById('collision-msg');
 
+const hofOverlay = document.getElementById('hof-overlay');
+const hofInputSection = document.getElementById('hof-input-section');
+const hofInitials = document.getElementById('hof-initials');
+const hofSubmit = document.getElementById('hof-submit');
+const hofBody = document.getElementById('hof-body');
+const hofCloseBtn = document.getElementById('hof-close-btn');
+const showHofBtn = document.getElementById('show-hof-btn');
+
+class ScoreManager {
+  static getScores() {
+    const scores = localStorage.getItem('antiXonixScores');
+    return scores ? JSON.parse(scores) : [];
+  }
+
+  static saveScore(name, score, level) {
+    const scores = this.getScores();
+    scores.push({ name, score, level });
+    scores.sort((a, b) => b.score - a.score);
+    const top10 = scores.slice(0, 10);
+    localStorage.setItem('antiXonixScores', JSON.stringify(top10));
+    return top10;
+  }
+
+  static isHighScore(score) {
+    const scores = this.getScores();
+    if (scores.length < 10) return true;
+    return score > scores[scores.length - 1].score;
+  }
+}
+
+function renderHof() {
+  const scores = ScoreManager.getScores();
+  hofBody.innerHTML = '';
+  scores.forEach((s, i) => {
+    hofBody.innerHTML += `<tr>
+      <td>${i + 1}</td>
+      <td>${s.name}</td>
+      <td>${s.score}</td>
+      <td>${s.level}</td>
+    </tr>`;
+  });
+}
+
+showHofBtn.addEventListener('click', () => {
+  renderHof();
+  hofInputSection.style.display = 'none';
+  hofOverlay.style.display = 'block';
+});
+
+hofCloseBtn.addEventListener('click', () => {
+  hofOverlay.style.display = 'none';
+  if (game.gameOver) {
+    uiGameOver.style.display = 'block';
+  }
+});
+
+hofSubmit.addEventListener('click', () => {
+  let name = hofInitials.value.toUpperCase() || 'AAA';
+  ScoreManager.saveScore(name, game.score, game.level);
+  hofInputSection.style.display = 'none';
+  renderHof();
+});
+
 const retroMessages = [
   "BOGUS! Your trail was totally harshed!",
   "BUMMER! That sphere just harsh'd your mellow!",
@@ -125,6 +188,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 let lastTime = performance.now();
+let gameOverHandled = false;
 
 function animate() {
   requestAnimationFrame(animate);
@@ -158,6 +222,7 @@ function animate() {
     
   } else if (!game.gameOver && !game.gameWon) {
     wasInCollision = false;
+    gameOverHandled = false;
     game.player.update(dt);
     game.enemies.forEach(e => e.update(dt));
     
@@ -188,6 +253,17 @@ function animate() {
     } else {
       document.getElementById('game-over-text').innerText = "Game Over";
       restartBtn.innerText = "Restart Game";
+      
+      if (!gameOverHandled && game.score > 0 && ScoreManager.isHighScore(game.score)) {
+        gameOverHandled = true;
+        uiGameOver.style.display = 'none';
+        hofInputSection.style.display = 'block';
+        hofOverlay.style.display = 'block';
+        hofInitials.value = '';
+        renderHof();
+      } else {
+        gameOverHandled = true;
+      }
     }
   }
 
@@ -208,6 +284,8 @@ restartBtn.addEventListener('click', () => {
   } else {
     game.fullReset();
   }
+  
+  gameOverHandled = false;
   
   enemyMeshes.forEach(m => scene.remove(m));
   enemyMeshes.length = 0;
