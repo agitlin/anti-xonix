@@ -69,7 +69,7 @@ hofCloseBtn.addEventListener('click', () => {
 });
 
 hofSubmit.addEventListener('click', () => {
-  let name = hofInitials.value.toUpperCase() || 'AAA';
+  let name = hofInitials.value.toUpperCase() || 'PLAYER';
   ScoreManager.saveScore(name, game.score, game.level);
   hofInputSection.style.display = 'none';
   renderHof();
