@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Air Xonix Clone</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <div id="ui">
+      <div>Level: <span id="level">1</span></div>
+      <div>Score: <span id="score">0</span></div>
+      <div>Lives: <span id="lives">3</span></div>
+      <div>Progress: <span id="progress">0</span>%</div>
+    </div>
+    <div id="collision-overlay" style="display: none;">
+      <h1 id="collision-msg" class="retro-text">BOGUS!</h1>
+      <p class="retro-subtext">PRESS SPACE TO RESUME</p>
+    </div>
+    <div id="game-over" style="display: none;">
+      <h1 id="game-over-text">Game Over</h1>
+      <button id="restart-btn">Restart</button>
+    </div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
