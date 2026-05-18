@@ -254,15 +254,18 @@ function animate() {
       document.getElementById('game-over-text').innerText = "Game Over";
       restartBtn.innerText = "Restart Game";
       
-      if (!gameOverHandled && game.score > 0 && ScoreManager.isHighScore(game.score)) {
+      if (!gameOverHandled) {
         gameOverHandled = true;
         uiGameOver.style.display = 'none';
-        hofInputSection.style.display = 'block';
         hofOverlay.style.display = 'block';
-        hofInitials.value = '';
         renderHof();
-      } else {
-        gameOverHandled = true;
+        
+        if (game.score > 0 && ScoreManager.isHighScore(game.score)) {
+          hofInputSection.style.display = 'block';
+          hofInitials.value = '';
+        } else {
+          hofInputSection.style.display = 'none';
+        }
       }
     }
   }
