@@ -113,8 +113,9 @@ function spawnLevelEntities() {
   }
   let numGreyEnemies = 1 + game.level;
   for (let i = 0; i < numGreyEnemies; i++) {
-    let ex = 2 + Math.random() * (GRID_SIZE - 4);
-    let ey = Math.random() > 0.5 ? 1.0 : GRID_SIZE - 1.0;
+    let fraction = numGreyEnemies > 1 ? i / (numGreyEnemies - 1) : 0.5;
+    let ex = 1.5 + fraction * (GRID_SIZE - 3);
+    let ey = GRID_SIZE - 1.5;
     game.greyEnemies.push(new GreyEnemy(game, ex, ey));
   }
 }

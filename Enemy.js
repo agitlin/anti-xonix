@@ -1,4 +1,4 @@
-import { CELL_EMPTY, CELL_FILLED, CELL_TRAIL } from './Game.js';
+import { CELL_EMPTY, CELL_FILLED, CELL_TRAIL, GRID_SIZE } from './Game.js';
 
 export class Enemy {
   constructor(game, x, y) {
@@ -96,16 +96,16 @@ export class GreyEnemy {
     let bounceX = false;
     let bounceY = false;
 
-    // Bounce on non-FILLED cells
-    let leftCell = this.game.getCell(left, Math.floor(this.y));
-    let rightCell = this.game.getCell(right, Math.floor(this.y));
+    // Bounce on non-FILLED cells or grid boundaries
+    let leftCell = left < 0 ? CELL_EMPTY : this.game.getCell(left, Math.floor(this.y));
+    let rightCell = right >= GRID_SIZE ? CELL_EMPTY : this.game.getCell(right, Math.floor(this.y));
     
     if (leftCell !== CELL_FILLED || rightCell !== CELL_FILLED) {
       bounceX = true;
     }
 
-    let topCell = this.game.getCell(Math.floor(this.x), top);
-    let bottomCell = this.game.getCell(Math.floor(this.x), bottom);
+    let topCell = top < 0 ? CELL_EMPTY : this.game.getCell(Math.floor(this.x), top);
+    let bottomCell = bottom >= GRID_SIZE ? CELL_EMPTY : this.game.getCell(Math.floor(this.x), bottom);
     
     if (topCell !== CELL_FILLED || bottomCell !== CELL_FILLED) {
       bounceY = true;
@@ -117,7 +117,9 @@ export class GreyEnemy {
     if (!bounceX && !bounceY) {
         let diagX = Math.floor(nextX + Math.sign(this.vx)*r);
         let diagY = Math.floor(nextY + Math.sign(this.vy)*r);
-        let diagCell = this.game.getCell(diagX, diagY);
+        let diagCell = (diagX < 0 || diagX >= GRID_SIZE || diagY < 0 || diagY >= GRID_SIZE)
+            ? CELL_EMPTY 
+            : this.game.getCell(diagX, diagY);
         
         if (diagCell !== CELL_FILLED) {
              this.vx *= -1;
