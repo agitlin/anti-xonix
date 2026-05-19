@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Game, GRID_SIZE, CELL_EMPTY, CELL_FILLED, CELL_TRAIL } from './Game.js';
 import { Player } from './Player.js';
-import { Enemy } from './Enemy.js';
+import { Enemy, GreyEnemy } from './Enemy.js';
 
 const uiScore = document.getElementById('score');
 const uiLives = document.getElementById('lives');
@@ -104,11 +104,18 @@ let game = new Game();
 function spawnLevelEntities() {
   game.player = new Player(game);
   game.enemies = [];
+  game.greyEnemies = [];
   let numEnemies = 2 + game.level;
   for (let i = 0; i < numEnemies; i++) {
     let ex = 5 + Math.random() * (GRID_SIZE - 10);
     let ey = 5 + Math.random() * (GRID_SIZE - 10);
     game.enemies.push(new Enemy(game, ex, ey));
+  }
+  let numGreyEnemies = 1 + game.level;
+  for (let i = 0; i < numGreyEnemies; i++) {
+    let ex = 2 + Math.random() * (GRID_SIZE - 4);
+    let ey = Math.random() > 0.5 ? 1.0 : GRID_SIZE - 1.0;
+    game.greyEnemies.push(new GreyEnemy(game, ex, ey));
   }
 }
 
@@ -131,6 +138,9 @@ scene.add(playerMesh);
 const enemyGeo = new THREE.SphereGeometry(0.4, 16, 16);
 const enemyMat = new THREE.MeshLambertMaterial({ color: 0xf44336 });
 const enemyMeshes = [];
+
+const greyEnemyMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+const greyEnemyMeshes = [];
 
 const dummy = new THREE.Object3D();
 const dummyColor = new THREE.Color();
@@ -225,6 +235,7 @@ function animate() {
     gameOverHandled = false;
     game.player.update(dt);
     game.enemies.forEach(e => e.update(dt));
+    game.greyEnemies.forEach(e => e.update(dt));
     
     playerMesh.position.set(game.player.x, 0.5, game.player.y);
     
@@ -235,6 +246,15 @@ function animate() {
     }
     game.enemies.forEach((e, i) => {
       enemyMeshes[i].position.set(e.x, 0.5, e.y);
+    });
+
+    while (greyEnemyMeshes.length < game.greyEnemies.length) {
+      let m = new THREE.Mesh(enemyGeo, greyEnemyMat);
+      scene.add(m);
+      greyEnemyMeshes.push(m);
+    }
+    game.greyEnemies.forEach((e, i) => {
+      greyEnemyMeshes[i].position.set(e.x, 0.5, e.y);
     });
 
     updateInstancedMesh(false);
@@ -292,6 +312,9 @@ restartBtn.addEventListener('click', () => {
   
   enemyMeshes.forEach(m => scene.remove(m));
   enemyMeshes.length = 0;
+  
+  greyEnemyMeshes.forEach(m => scene.remove(m));
+  greyEnemyMeshes.length = 0;
   
   spawnLevelEntities();
 });

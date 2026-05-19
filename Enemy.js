@@ -69,3 +69,73 @@ export class Enemy {
     if (!bounceY) this.y += this.vy * dt;
   }
 }
+
+export class GreyEnemy {
+  constructor(game, x, y) {
+    this.game = game;
+    this.x = x;
+    this.y = y;
+    this.speed = 5; // slightly slower or same speed
+    let angle = Math.random() * Math.PI * 2;
+    this.vx = Math.cos(angle) * this.speed;
+    this.vy = Math.sin(angle) * this.speed;
+    if (Math.abs(this.vx) < 2) this.vx = Math.sign(this.vx || 1) * 2;
+    if (Math.abs(this.vy) < 2) this.vy = Math.sign(this.vy || 1) * 2;
+  }
+
+  update(dt) {
+    let nextX = this.x + this.vx * dt;
+    let nextY = this.y + this.vy * dt;
+
+    let r = 0.4;
+    let left = Math.floor(nextX - r);
+    let right = Math.floor(nextX + r);
+    let top = Math.floor(nextY - r);
+    let bottom = Math.floor(nextY + r);
+
+    let bounceX = false;
+    let bounceY = false;
+
+    // Bounce on non-FILLED cells
+    let leftCell = this.game.getCell(left, Math.floor(this.y));
+    let rightCell = this.game.getCell(right, Math.floor(this.y));
+    
+    if (leftCell !== CELL_FILLED || rightCell !== CELL_FILLED) {
+      bounceX = true;
+    }
+
+    let topCell = this.game.getCell(Math.floor(this.x), top);
+    let bottomCell = this.game.getCell(Math.floor(this.x), bottom);
+    
+    if (topCell !== CELL_FILLED || bottomCell !== CELL_FILLED) {
+      bounceY = true;
+    }
+
+    if (bounceX) this.vx *= -1;
+    if (bounceY) this.vy *= -1;
+
+    if (!bounceX && !bounceY) {
+        let diagX = Math.floor(nextX + Math.sign(this.vx)*r);
+        let diagY = Math.floor(nextY + Math.sign(this.vy)*r);
+        let diagCell = this.game.getCell(diagX, diagY);
+        
+        if (diagCell !== CELL_FILLED) {
+             this.vx *= -1;
+             this.vy *= -1;
+        }
+    }
+
+    if (!bounceX) this.x += this.vx * dt;
+    if (!bounceY) this.y += this.vy * dt;
+
+    // Check collision with player directly since they share CELL_FILLED
+    if (this.game.player && !this.game.gameOver && !this.game.inCollisionPause) {
+      let dx = this.x - this.game.player.x;
+      let dy = this.y - this.game.player.y;
+      if (Math.sqrt(dx*dx + dy*dy) < 0.8) {
+        this.game.loseLife(this.x, this.y);
+      }
+    }
+  }
+}
+

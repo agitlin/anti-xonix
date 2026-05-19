@@ -28,6 +28,7 @@ export class Game {
   resetLevel() {
     this.grid = [];
     this.enemies = [];
+    this.greyEnemies = [];
     this.player = null;
     this.gameOver = false;
     this.gameWon = false;
