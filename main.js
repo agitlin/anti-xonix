@@ -99,9 +99,182 @@ light.position.set(10, 20, 10);
 scene.add(light);
 scene.add(new THREE.AmbientLight(0x404040));
 
+const activePowerupsContainer = document.getElementById('active-powerups');
+const powerUpMeshes = new Map();
+
+function getHexColorString(type) {
+  switch (type) {
+    case 'S': return '#00e5ff';
+    case 'A': return '#39ff14';
+    case 'Heart': return '#ff073a';
+    case 'x2': return '#ffeb3b';
+  }
+  return '#ffffff';
+}
+
+function getColorForType(type) {
+  switch (type) {
+    case 'S': return 0x00e5ff;
+    case 'A': return 0x39ff14;
+    case 'Heart': return 0xff073a;
+    case 'x2': return 0xffeb3b;
+  }
+  return 0xffffff;
+}
+
+function getTextForType(type) {
+  switch (type) {
+    case 'Heart': return '♥';
+    default: return type;
+  }
+}
+
+function createPowerUpTexture(type) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+
+  const gradient = ctx.createRadialGradient(32, 32, 2, 32, 32, 32);
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+  gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.3)');
+  gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 64, 64);
+
+  ctx.font = 'bold 36px "Segoe UI", Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  ctx.fillText(getTextForType(type), 34, 34);
+  
+  ctx.fillStyle = getHexColorString(type);
+  ctx.fillText(getTextForType(type), 32, 32);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+}
+
+function createChestGroup(type) {
+  const group = new THREE.Group();
+
+  const baseGeo = new THREE.BoxGeometry(0.6, 0.3, 0.6);
+  const baseMat = new THREE.MeshLambertMaterial({ color: 0x5c4033 });
+  const base = new THREE.Mesh(baseGeo, baseMat);
+  base.position.y = 0.15;
+  group.add(base);
+
+  const lidGeo = new THREE.BoxGeometry(0.64, 0.16, 0.64);
+  const lidMat = new THREE.MeshLambertMaterial({ color: 0xffd700 });
+  const lid = new THREE.Mesh(lidGeo, lidMat);
+  lid.position.y = 0.38;
+  group.add(lid);
+
+  const lockGeo = new THREE.BoxGeometry(0.12, 0.12, 0.08);
+  const lockMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+  const lock = new THREE.Mesh(lockGeo, lockMat);
+  lock.position.set(0, 0.25, 0.32);
+  group.add(lock);
+
+  const chestGlow = new THREE.PointLight(getColorForType(type), 1.5, 3);
+  chestGlow.position.set(0, 0.2, 0);
+  group.add(chestGlow);
+
+  const spriteTexture = createPowerUpTexture(type);
+  const spriteMat = new THREE.SpriteMaterial({ map: spriteTexture, transparent: true });
+  const sprite = new THREE.Sprite(spriteMat);
+  sprite.position.set(0, 0.8, 0);
+  sprite.scale.set(0.7, 0.7, 0.7);
+  group.add(sprite);
+
+  return group;
+}
+
+function clearAllPowerUpMeshes() {
+  for (let [powerUp, mesh] of powerUpMeshes.entries()) {
+    scene.remove(mesh);
+  }
+  powerUpMeshes.clear();
+}
+
+function syncPowerUpMeshes() {
+  for (let [powerUp, mesh] of powerUpMeshes.entries()) {
+    if (!game.powerUps.includes(powerUp)) {
+      scene.remove(mesh);
+      powerUpMeshes.delete(powerUp);
+    }
+  }
+
+  for (let p of game.powerUps) {
+    if (!powerUpMeshes.has(p)) {
+      let mesh = createChestGroup(p.type);
+      scene.add(mesh);
+      powerUpMeshes.set(p, mesh);
+    }
+  }
+
+  let time = performance.now() / 1000;
+  for (let [p, mesh] of powerUpMeshes.entries()) {
+    mesh.position.x = p.x + 0.5;
+    mesh.position.z = p.y + 0.5;
+    mesh.position.y = 0.45 + Math.sin(time * 3 + p.x * 2) * 0.12;
+    mesh.rotation.y = time * 1.5;
+  }
+}
+
+function updatePowerUpsHUD() {
+  if (!activePowerupsContainer) return;
+  let html = '';
+  if (game.activePowerUps.enemySlow > 0) {
+    let pct = (game.activePowerUps.enemySlow / 40) * 100;
+    html += `
+      <div class="powerup-item">
+        <div class="powerup-info slow">
+          <span>SLOW ENEMIES</span>
+          <span>${Math.ceil(game.activePowerUps.enemySlow)}s</span>
+        </div>
+        <div class="powerup-bar-bg">
+          <div class="powerup-bar-fill slow" style="width: ${pct}%"></div>
+        </div>
+      </div>
+    `;
+  }
+  if (game.activePowerUps.playerSpeed > 0) {
+    let pct = (game.activePowerUps.playerSpeed / 40) * 100;
+    html += `
+      <div class="powerup-item">
+        <div class="powerup-info speed">
+          <span>SPEED BOOST</span>
+          <span>${Math.ceil(game.activePowerUps.playerSpeed)}s</span>
+        </div>
+        <div class="powerup-bar-bg">
+          <div class="powerup-bar-fill speed" style="width: ${pct}%"></div>
+        </div>
+      </div>
+    `;
+  }
+  if (game.activePowerUps.playerX2 > 0) {
+    let pct = (game.activePowerUps.playerX2 / 40) * 100;
+    html += `
+      <div class="powerup-item">
+        <div class="powerup-info size">
+          <span>DOUBLE SIZE</span>
+          <span>${Math.ceil(game.activePowerUps.playerX2)}s</span>
+        </div>
+        <div class="powerup-bar-bg">
+          <div class="powerup-bar-fill size" style="width: ${pct}%"></div>
+        </div>
+      </div>
+    `;
+  }
+  activePowerupsContainer.innerHTML = html;
+}
+
 let game = new Game();
 
 function spawnLevelEntities() {
+  clearAllPowerUpMeshes();
   game.player = new Player(game);
   game.enemies = [];
   game.greyEnemies = [];
@@ -234,11 +407,22 @@ function animate() {
   } else if (!game.gameOver && !game.gameWon) {
     wasInCollision = false;
     gameOverHandled = false;
+    
+    game.updatePowerUps(dt);
     game.player.update(dt);
     game.enemies.forEach(e => e.update(dt));
     game.greyEnemies.forEach(e => e.update(dt));
     
-    playerMesh.position.set(game.player.x, 0.5, game.player.y);
+    if (game.activePowerUps && game.activePowerUps.playerX2 > 0) {
+      playerMesh.scale.set(2, 2, 2);
+      playerMesh.position.set(game.player.x, 0.9, game.player.y);
+    } else {
+      playerMesh.scale.set(1, 1, 1);
+      playerMesh.position.set(game.player.x, 0.5, game.player.y);
+    }
+    
+    syncPowerUpMeshes();
+    updatePowerUpsHUD();
     
     while (enemyMeshes.length < game.enemies.length) {
       let m = new THREE.Mesh(enemyGeo, enemyMat);

@@ -28,6 +28,26 @@ export class Player {
     this.direction = { x: 0, y: 0 };
     this.nextDirection = { x: 0, y: 0 };
     this.isDrawing = false;
+    this.recentTrailCells = [];
+  }
+
+  getSpeed() {
+    if (this.game.activePowerUps && this.game.activePowerUps.playerSpeed > 0) {
+      return 18;
+    }
+    return 10;
+  }
+
+  getFootprint(gridX, gridY) {
+    let cells = [{ x: gridX, y: gridY }];
+    if (this.game.activePowerUps && this.game.activePowerUps.playerX2 > 0) {
+      let x2 = Math.min(GRID_SIZE - 1, gridX + 1);
+      let y2 = Math.min(GRID_SIZE - 1, gridY + 1);
+      if (x2 !== gridX) cells.push({ x: x2, y: gridY });
+      if (y2 !== gridY) cells.push({ x: gridX, y: y2 });
+      if (x2 !== gridX && y2 !== gridY) cells.push({ x: x2, y: y2 });
+    }
+    return cells;
   }
 
   update(dt) {
@@ -57,8 +77,9 @@ export class Player {
     let prevGridX = Math.floor(this.x);
     let prevGridY = Math.floor(this.y);
 
-    this.x += this.direction.x * this.speed * dt;
-    this.y += this.direction.y * this.speed * dt;
+    let speed = this.getSpeed();
+    this.x += this.direction.x * speed * dt;
+    this.y += this.direction.y * speed * dt;
 
     this.x = Math.max(0, Math.min(GRID_SIZE - 0.01, this.x));
     this.y = Math.max(0, Math.min(GRID_SIZE - 0.01, this.y));
@@ -66,23 +87,59 @@ export class Player {
     let gridX = Math.floor(this.x);
     let gridY = Math.floor(this.y);
 
-    let currentCell = this.game.getCell(gridX, gridY);
+    let footprint = this.getFootprint(gridX, gridY);
 
-    if (currentCell === CELL_EMPTY) {
-      this.isDrawing = true;
-      this.game.setCell(gridX, gridY, CELL_TRAIL);
-    } else if (currentCell === CELL_TRAIL) {
-      if (gridX !== prevGridX || gridY !== prevGridY) {
-        this.game.loseLife(this.x, this.y);
+    // Check if player collects any treasure chests
+    this.game.checkPowerUpCollections(footprint);
+
+    let leadCell = this.game.getCell(gridX, gridY);
+
+    // State transition from FILLED to drawing if any footprint cell is EMPTY
+    if (!this.isDrawing) {
+      let anyEmpty = footprint.some(c => this.game.getCell(c.x, c.y) === CELL_EMPTY);
+      if (anyEmpty) {
+        this.isDrawing = true;
+        this.recentTrailCells = [];
       }
-    } else if (currentCell === CELL_FILLED) {
-      if (this.isDrawing) {
+    }
+
+    if (this.isDrawing) {
+      // Draw footprint cells
+      for (let cell of footprint) {
+        let cellType = this.game.getCell(cell.x, cell.y);
+        if (cellType === CELL_EMPTY) {
+          this.game.setCell(cell.x, cell.y, CELL_TRAIL);
+          
+          // Avoid duplicate entries in recent list
+          let inRecent = this.recentTrailCells.some(c => c.x === cell.x && c.y === cell.y);
+          if (!inRecent) {
+            this.recentTrailCells.push({ x: cell.x, y: cell.y });
+            let maxRecent = (this.game.activePowerUps && this.game.activePowerUps.playerX2 > 0) ? 12 : 4;
+            if (this.recentTrailCells.length > maxRecent) {
+              this.recentTrailCells.shift();
+            }
+          }
+        } else if (cellType === CELL_TRAIL) {
+          // Self-collision check
+          let inRecent = this.recentTrailCells.some(c => c.x === cell.x && c.y === cell.y);
+          if (!inRecent) {
+            if (gridX !== prevGridX || gridY !== prevGridY) {
+              this.game.loseLife(this.x, this.y);
+              return;
+            }
+          }
+        }
+      }
+
+      // Check if lead cell has returned to CELL_FILLED to complete the capture
+      if (leadCell === CELL_FILLED) {
         this.game.captureArea();
         this.isDrawing = false;
-        this.direction = {x: 0, y: 0};
-        this.nextDirection = {x: 0, y: 0};
+        this.direction = { x: 0, y: 0 };
+        this.nextDirection = { x: 0, y: 0 };
         this.x = gridX + 0.5;
         this.y = gridY + 0.5;
+        this.recentTrailCells = [];
       }
     }
   }

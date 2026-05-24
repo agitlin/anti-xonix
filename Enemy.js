@@ -14,6 +14,9 @@ export class Enemy {
   }
 
   update(dt) {
+    if (this.game.activePowerUps && this.game.activePowerUps.enemySlow > 0) {
+      dt *= 0.4;
+    }
     let nextX = this.x + this.vx * dt;
     let nextY = this.y + this.vy * dt;
 
@@ -84,6 +87,9 @@ export class GreyEnemy {
   }
 
   update(dt) {
+    if (this.game.activePowerUps && this.game.activePowerUps.enemySlow > 0) {
+      dt *= 0.4;
+    }
     let nextX = this.x + this.vx * dt;
     let nextY = this.y + this.vy * dt;
 

@@ -34,6 +34,13 @@ export class Game {
     this.gameWon = false;
     this.inCollisionPause = false;
     this.impactPoint = null;
+    this.powerUps = [];
+    this.powerUpSpawnTimer = 0;
+    this.activePowerUps = {
+      enemySlow: 0,
+      playerSpeed: 0,
+      playerX2: 0
+    };
     
     // Initialize grid
     for (let y = 0; y < GRID_SIZE; y++) {
@@ -146,6 +153,14 @@ export class Game {
     this.impactPoint = null;
     this.lives--;
     
+    // Clear active power-up states on death
+    this.activePowerUps = {
+      enemySlow: 0,
+      playerSpeed: 0,
+      playerX2: 0
+    };
+    this.powerUps = [];
+    
     if (this.lives <= 0) {
       this.gameOver = true;
     } else {
@@ -174,5 +189,88 @@ export class Game {
       }
     }
     return Math.min(100, Math.floor((filledCount / totalEmpty) * 100));
+  }
+
+  updatePowerUps(dt) {
+    if (this.gameOver || this.gameWon || this.inCollisionPause) return;
+
+    // 1. Tick down active power-ups
+    if (this.activePowerUps.enemySlow > 0) {
+      this.activePowerUps.enemySlow = Math.max(0, this.activePowerUps.enemySlow - dt);
+    }
+    if (this.activePowerUps.playerSpeed > 0) {
+      this.activePowerUps.playerSpeed = Math.max(0, this.activePowerUps.playerSpeed - dt);
+    }
+    if (this.activePowerUps.playerX2 > 0) {
+      this.activePowerUps.playerX2 = Math.max(0, this.activePowerUps.playerX2 - dt);
+    }
+
+    // 2. Tick down floating chests on board and despawn expired ones
+    for (let i = this.powerUps.length - 1; i >= 0; i--) {
+      this.powerUps[i].timer -= dt;
+      if (this.powerUps[i].timer <= 0) {
+        this.powerUps.splice(i, 1);
+      }
+    }
+
+    // 3. Spawning timer
+    this.powerUpSpawnTimer += dt;
+    if (this.powerUpSpawnTimer >= 15) { // spawn check every 15 seconds
+      this.powerUpSpawnTimer = 0;
+      if (this.powerUps.length < 3) {
+        this.spawnPowerUp();
+      }
+    }
+  }
+
+  spawnPowerUp() {
+    // Gather all empty grid cell coordinates
+    let emptyCells = [];
+    for (let y = BORDER_THICKNESS; y < GRID_SIZE - BORDER_THICKNESS; y++) {
+      for (let x = BORDER_THICKNESS; x < GRID_SIZE - BORDER_THICKNESS; x++) {
+        if (this.grid[y][x] === CELL_EMPTY) {
+          // Check if there's already a power-up here
+          let occupied = this.powerUps.some(p => p.x === x && p.y === y);
+          if (!occupied) {
+            emptyCells.push({ x, y });
+          }
+        }
+      }
+    }
+
+    if (emptyCells.length > 0) {
+      let cell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      let types = ['S', 'A', 'Heart', 'x2'];
+      let type = types[Math.floor(Math.random() * types.length)];
+      this.powerUps.push({
+        x: cell.x,
+        y: cell.y,
+        type: type,
+        timer: 15 // despawns in 15 seconds
+      });
+    }
+  }
+
+  checkPowerUpCollections(cells) {
+    for (let cell of cells) {
+      let idx = this.powerUps.findIndex(p => p.x === cell.x && p.y === cell.y);
+      if (idx !== -1) {
+        let p = this.powerUps[idx];
+        this.powerUps.splice(idx, 1);
+        this.collectPowerUp(p);
+      }
+    }
+  }
+
+  collectPowerUp(p) {
+    if (p.type === 'Heart') {
+      this.lives++;
+    } else if (p.type === 'S') {
+      this.activePowerUps.enemySlow = 40;
+    } else if (p.type === 'A') {
+      this.activePowerUps.playerSpeed = 40;
+    } else if (p.type === 'x2') {
+      this.activePowerUps.playerX2 = 40;
+    }
   }
 }

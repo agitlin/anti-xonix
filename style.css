@@ -154,3 +154,73 @@ canvas {
   background: #fff;
   box-shadow: 0 0 10px #fff;
 }
+
+#active-powerups {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.powerup-item {
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  border-radius: 6px;
+  padding: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.powerup-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+.powerup-info.slow { color: #00e5ff; }
+.powerup-info.speed { color: #39ff14; }
+.powerup-info.size { color: #ffeb3b; }
+
+.powerup-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.powerup-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.1s linear;
+}
+
+.powerup-bar-fill.slow {
+  background: linear-gradient(90deg, #00838f, #00e5ff);
+  box-shadow: 0 0 8px #00e5ff;
+}
+
+.powerup-bar-fill.speed {
+  background: linear-gradient(90deg, #2e7d32, #39ff14);
+  box-shadow: 0 0 8px #39ff14;
+}
+
+.powerup-bar-fill.size {
+  background: linear-gradient(90deg, #f57f17, #ffeb3b);
+  box-shadow: 0 0 8px #ffeb3b;
+}
