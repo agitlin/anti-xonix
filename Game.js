@@ -39,7 +39,8 @@ export class Game {
     this.activePowerUps = {
       enemySlow: 0,
       playerSpeed: 0,
-      playerX2: 0
+      playerX2: 0,
+      heartPopup: 0
     };
     
     // Initialize grid
@@ -157,7 +158,8 @@ export class Game {
     this.activePowerUps = {
       enemySlow: 0,
       playerSpeed: 0,
-      playerX2: 0
+      playerX2: 0,
+      heartPopup: 0
     };
     this.powerUps = [];
     
@@ -203,6 +205,9 @@ export class Game {
     }
     if (this.activePowerUps.playerX2 > 0) {
       this.activePowerUps.playerX2 = Math.max(0, this.activePowerUps.playerX2 - dt);
+    }
+    if (this.activePowerUps.heartPopup > 0) {
+      this.activePowerUps.heartPopup = Math.max(0, this.activePowerUps.heartPopup - dt);
     }
 
     // 2. Tick down floating chests on board and despawn expired ones
@@ -265,6 +270,7 @@ export class Game {
   collectPowerUp(p) {
     if (p.type === 'Heart') {
       this.lives++;
+      this.activePowerUps.heartPopup = 3;
     } else if (p.type === 'S') {
       this.activePowerUps.enemySlow = 40;
     } else if (p.type === 'A') {

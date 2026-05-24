@@ -226,6 +226,16 @@ function syncPowerUpMeshes() {
 function updatePowerUpsHUD() {
   if (!activePowerupsContainer) return;
   let html = '';
+  if (game.activePowerUps.heartPopup > 0) {
+    html += `
+      <div class="powerup-item">
+        <div class="powerup-info heart">
+          <span>EXTRA LIFE!</span>
+        </div>
+        <div class="powerup-visual visual-heart">&hearts;</div>
+      </div>
+    `;
+  }
   if (game.activePowerUps.enemySlow > 0) {
     let pct = (game.activePowerUps.enemySlow / 40) * 100;
     html += `
@@ -237,6 +247,7 @@ function updatePowerUpsHUD() {
         <div class="powerup-bar-bg">
           <div class="powerup-bar-fill slow" style="width: ${pct}%"></div>
         </div>
+        <div class="powerup-visual visual-slow">S</div>
       </div>
     `;
   }
@@ -251,6 +262,7 @@ function updatePowerUpsHUD() {
         <div class="powerup-bar-bg">
           <div class="powerup-bar-fill speed" style="width: ${pct}%"></div>
         </div>
+        <div class="powerup-visual visual-speed">&raquo;&raquo;</div>
       </div>
     `;
   }
@@ -265,6 +277,7 @@ function updatePowerUpsHUD() {
         <div class="powerup-bar-bg">
           <div class="powerup-bar-fill size" style="width: ${pct}%"></div>
         </div>
+        <div class="powerup-visual visual-size">x2</div>
       </div>
     `;
   }
