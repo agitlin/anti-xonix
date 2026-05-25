@@ -414,6 +414,7 @@ const gluedEnemyMat = new THREE.MeshLambertMaterial({ color: 0xffb300 });
 const enemyMeshes = [];
 
 const greyEnemyMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+const gluedGreyEnemyMat = new THREE.MeshLambertMaterial({ color: 0xffb300 });
 const greyEnemyMeshes = [];
 
 const bitingEnemyMat = new THREE.MeshLambertMaterial({ color: 0xff9800 });
@@ -533,6 +534,22 @@ function animate() {
     game.enemies.forEach(e => e.update(dt));
     game.greyEnemies.forEach(e => e.update(dt));
     game.bitingEnemies.forEach(e => e.update(dt));
+
+    if (game.activePowerUps.playerGlue > 0) {
+      let allEnemies = [...game.enemies, ...game.greyEnemies, ...game.bitingEnemies];
+      for (let i = 0; i < allEnemies.length; i++) {
+        for (let j = i + 1; j < allEnemies.length; j++) {
+          let e1 = allEnemies[i];
+          let e2 = allEnemies[j];
+          let dx = e1.x - e2.x;
+          let dy = e1.y - e2.y;
+          if (Math.sqrt(dx*dx + dy*dy) < 0.8) {
+            e1.isGlued = true;
+            e2.isGlued = true;
+          }
+        }
+      }
+    }
     
     if (game.activePowerUps && game.activePowerUps.playerX2 > 0) {
       playerMesh.scale.set(2, 2, 2);
@@ -577,6 +594,11 @@ function animate() {
     }
     game.greyEnemies.forEach((e, i) => {
       greyEnemyMeshes[i].position.set(e.x, 0.5, e.y);
+      if (e.isGlued) {
+        greyEnemyMeshes[i].material = gluedGreyEnemyMat;
+      } else {
+        greyEnemyMeshes[i].material = greyEnemyMat;
+      }
     });
 
     while (bitingEnemyMeshes.length < game.bitingEnemies.length) {

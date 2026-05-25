@@ -35,20 +35,11 @@ export class Enemy {
     let leftCell = this.game.getCell(left, Math.floor(this.y));
     let rightCell = this.game.getCell(right, Math.floor(this.y));
     
-    let hasGlue = this.game.activePowerUps && this.game.activePowerUps.playerGlue > 0;
-
     if (leftCell === CELL_FILLED || rightCell === CELL_FILLED) {
       bounceX = true;
     } else if (leftCell === CELL_TRAIL || rightCell === CELL_TRAIL) {
-      if (hasGlue) {
-        this.isGlued = true;
-        this.vx = 0;
-        this.vy = 0;
-        return;
-      } else {
-        this.game.loseLife(this.x, this.y);
-        return;
-      }
+      this.game.loseLife(this.x, this.y);
+      return;
     }
 
     // Check Y collision
@@ -57,16 +48,11 @@ export class Enemy {
     
     if (topCell === CELL_FILLED || bottomCell === CELL_FILLED) {
       bounceY = true;
+    if (topCell === CELL_FILLED || bottomCell === CELL_FILLED) {
+      bounceY = true;
     } else if (topCell === CELL_TRAIL || bottomCell === CELL_TRAIL) {
-      if (hasGlue) {
-        this.isGlued = true;
-        this.vx = 0;
-        this.vy = 0;
-        return;
-      } else {
-        this.game.loseLife(this.x, this.y);
-        return;
-      }
+      this.game.loseLife(this.x, this.y);
+      return;
     }
 
     if (bounceX) this.vx *= -1;
@@ -81,15 +67,8 @@ export class Enemy {
              this.vx *= -1;
              this.vy *= -1;
         } else if (diagCell === CELL_TRAIL) {
-             if (hasGlue) {
-                 this.isGlued = true;
-                 this.vx = 0;
-                 this.vy = 0;
-                 return;
-             } else {
-                 this.game.loseLife(this.x, this.y);
-                 return;
-             }
+             this.game.loseLife(this.x, this.y);
+             return;
         }
     }
 
@@ -109,9 +88,11 @@ export class GreyEnemy {
     this.vy = Math.sin(angle) * this.speed;
     if (Math.abs(this.vx) < 2) this.vx = Math.sign(this.vx || 1) * 2;
     if (Math.abs(this.vy) < 2) this.vy = Math.sign(this.vy || 1) * 2;
+    this.isGlued = false;
   }
 
   update(dt) {
+    if (this.isGlued) return;
     if (this.game.activePowerUps && this.game.activePowerUps.enemySlow > 0) {
       dt *= 0.4;
     }
@@ -228,22 +209,13 @@ export class BitingEnemy {
     let leftCell = this.game.getCell(left, Math.floor(this.y));
     let rightCell = this.game.getCell(right, Math.floor(this.y));
     
-    let hasGlue = this.game.activePowerUps && this.game.activePowerUps.playerGlue > 0;
-
     if (leftCell === CELL_FILLED || rightCell === CELL_FILLED) {
       if (leftCell === CELL_FILLED) this._biteCell(left, Math.floor(this.y));
       if (rightCell === CELL_FILLED) this._biteCell(right, Math.floor(this.y));
       bounceX = true;
     } else if (leftCell === CELL_TRAIL || rightCell === CELL_TRAIL) {
-      if (hasGlue) {
-        this.isGlued = true;
-        this.vx = 0;
-        this.vy = 0;
-        return;
-      } else {
-        this.game.loseLife(this.x, this.y);
-        return;
-      }
+      this.game.loseLife(this.x, this.y);
+      return;
     }
 
     // Check Y collision
@@ -255,15 +227,8 @@ export class BitingEnemy {
       if (bottomCell === CELL_FILLED) this._biteCell(Math.floor(this.x), bottom);
       bounceY = true;
     } else if (topCell === CELL_TRAIL || bottomCell === CELL_TRAIL) {
-      if (hasGlue) {
-        this.isGlued = true;
-        this.vx = 0;
-        this.vy = 0;
-        return;
-      } else {
-        this.game.loseLife(this.x, this.y);
-        return;
-      }
+      this.game.loseLife(this.x, this.y);
+      return;
     }
 
     if (bounceX) this.vx *= -1;
@@ -279,15 +244,8 @@ export class BitingEnemy {
              this.vx *= -1;
              this.vy *= -1;
         } else if (diagCell === CELL_TRAIL) {
-             if (hasGlue) {
-                 this.isGlued = true;
-                 this.vx = 0;
-                 this.vy = 0;
-                 return;
-             } else {
-                 this.game.loseLife(this.x, this.y);
-                 return;
-             }
+             this.game.loseLife(this.x, this.y);
+             return;
         }
     }
 
