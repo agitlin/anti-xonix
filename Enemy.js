@@ -33,11 +33,17 @@ export class Enemy {
     let leftCell = this.game.getCell(left, Math.floor(this.y));
     let rightCell = this.game.getCell(right, Math.floor(this.y));
     
+    let hasHelmet = this.game.activePowerUps && this.game.activePowerUps.playerHelmet > 0;
+
     if (leftCell === CELL_FILLED || rightCell === CELL_FILLED) {
       bounceX = true;
     } else if (leftCell === CELL_TRAIL || rightCell === CELL_TRAIL) {
-      this.game.loseLife(this.x, this.y);
-      return;
+      if (hasHelmet) {
+        bounceX = true;
+      } else {
+        this.game.loseLife(this.x, this.y);
+        return;
+      }
     }
 
     // Check Y collision
@@ -47,8 +53,12 @@ export class Enemy {
     if (topCell === CELL_FILLED || bottomCell === CELL_FILLED) {
       bounceY = true;
     } else if (topCell === CELL_TRAIL || bottomCell === CELL_TRAIL) {
-      this.game.loseLife(this.x, this.y);
-      return;
+      if (hasHelmet) {
+        bounceY = true;
+      } else {
+        this.game.loseLife(this.x, this.y);
+        return;
+      }
     }
 
     if (bounceX) this.vx *= -1;
@@ -63,8 +73,13 @@ export class Enemy {
              this.vx *= -1;
              this.vy *= -1;
         } else if (diagCell === CELL_TRAIL) {
-             this.game.loseLife(this.x, this.y);
-             return;
+             if (hasHelmet) {
+                 this.vx *= -1;
+                 this.vy *= -1;
+             } else {
+                 this.game.loseLife(this.x, this.y);
+                 return;
+             }
         }
     }
 
@@ -141,7 +156,16 @@ export class GreyEnemy {
       let dx = this.x - this.game.player.x;
       let dy = this.y - this.game.player.y;
       if (Math.sqrt(dx*dx + dy*dy) < 0.8) {
-        this.game.loseLife(this.x, this.y);
+        if (this.game.activePowerUps && this.game.activePowerUps.playerHelmet > 0) {
+          // Bounce off player
+          this.vx *= -1;
+          this.vy *= -1;
+          // Apply bounce immediately to separate
+          this.x += this.vx * dt;
+          this.y += this.vy * dt;
+        } else {
+          this.game.loseLife(this.x, this.y);
+        }
       }
     }
   }
@@ -185,8 +209,12 @@ export class BitingEnemy {
       if (rightCell === CELL_FILLED) this._biteCell(right, Math.floor(this.y));
       bounceX = true;
     } else if (leftCell === CELL_TRAIL || rightCell === CELL_TRAIL) {
-      this.game.loseLife(this.x, this.y);
-      return;
+      if (this.game.activePowerUps && this.game.activePowerUps.playerHelmet > 0) {
+        bounceX = true;
+      } else {
+        this.game.loseLife(this.x, this.y);
+        return;
+      }
     }
 
     // Check Y collision
@@ -198,8 +226,12 @@ export class BitingEnemy {
       if (bottomCell === CELL_FILLED) this._biteCell(Math.floor(this.x), bottom);
       bounceY = true;
     } else if (topCell === CELL_TRAIL || bottomCell === CELL_TRAIL) {
-      this.game.loseLife(this.x, this.y);
-      return;
+      if (this.game.activePowerUps && this.game.activePowerUps.playerHelmet > 0) {
+        bounceY = true;
+      } else {
+        this.game.loseLife(this.x, this.y);
+        return;
+      }
     }
 
     if (bounceX) this.vx *= -1;
@@ -215,8 +247,13 @@ export class BitingEnemy {
              this.vx *= -1;
              this.vy *= -1;
         } else if (diagCell === CELL_TRAIL) {
-             this.game.loseLife(this.x, this.y);
-             return;
+             if (this.game.activePowerUps && this.game.activePowerUps.playerHelmet > 0) {
+                 this.vx *= -1;
+                 this.vy *= -1;
+             } else {
+                 this.game.loseLife(this.x, this.y);
+                 return;
+             }
         }
     }
 

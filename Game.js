@@ -42,7 +42,7 @@ export class Game {
       enemySlow: 0,
       playerSpeed: 0,
       playerX2: 0,
-      playerX3: 0,
+      playerHelmet: 0,
       heartPopup: 0
     };
     
@@ -162,7 +162,7 @@ export class Game {
       enemySlow: 0,
       playerSpeed: 0,
       playerX2: 0,
-      playerX3: 0,
+      playerHelmet: 0,
       heartPopup: 0
     };
     this.powerUps = [];
@@ -210,8 +210,8 @@ export class Game {
     if (this.activePowerUps.playerX2 > 0) {
       this.activePowerUps.playerX2 = Math.max(0, this.activePowerUps.playerX2 - dt);
     }
-    if (this.activePowerUps.playerX3 > 0) {
-      this.activePowerUps.playerX3 = Math.max(0, this.activePowerUps.playerX3 - dt);
+    if (this.activePowerUps.playerHelmet > 0) {
+      this.activePowerUps.playerHelmet = Math.max(0, this.activePowerUps.playerHelmet - dt);
     }
     if (this.activePowerUps.heartPopup > 0) {
       this.activePowerUps.heartPopup = Math.max(0, this.activePowerUps.heartPopup - dt);
@@ -252,7 +252,7 @@ export class Game {
 
     if (emptyCells.length > 0) {
       let cell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-      let types = ['S', 'A', 'Heart', 'x2', 'x3'];
+      let types = ['S', 'A', 'Heart', 'x2', 'Helmet'];
       let type = types[Math.floor(Math.random() * types.length)];
       this.powerUps.push({
         x: cell.x,
@@ -284,8 +284,8 @@ export class Game {
       this.activePowerUps.playerSpeed = 40;
     } else if (p.type === 'x2') {
       this.activePowerUps.playerX2 = 40;
-    } else if (p.type === 'x3') {
-      this.activePowerUps.playerX3 = 40;
+    } else if (p.type === 'Helmet') {
+      this.activePowerUps.playerHelmet = 40;
     }
   }
 }

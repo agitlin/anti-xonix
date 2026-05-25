@@ -108,7 +108,7 @@ function getHexColorString(type) {
     case 'A': return '#39ff14';
     case 'Heart': return '#ff073a';
     case 'x2': return '#ffeb3b';
-    case 'x3': return '#d500f9';
+    case 'Helmet': return '#00ffff';
   }
   return '#ffffff';
 }
@@ -119,7 +119,7 @@ function getColorForType(type) {
     case 'A': return 0x39ff14;
     case 'Heart': return 0xff073a;
     case 'x2': return 0xffeb3b;
-    case 'x3': return 0xd500f9;
+    case 'Helmet': return 0x00ffff;
   }
   return 0xffffff;
 }
@@ -235,7 +235,7 @@ function updatePowerUpsHUD() {
   if (game.activePowerUps.enemySlow > 0) activeTypes.push('slow');
   if (game.activePowerUps.playerSpeed > 0) activeTypes.push('speed');
   if (game.activePowerUps.playerX2 > 0) activeTypes.push('size');
-  if (game.activePowerUps.playerX3 > 0) activeTypes.push('size3');
+  if (game.activePowerUps.playerHelmet > 0) activeTypes.push('helmet');
   
   let stateStr = activeTypes.join(',');
   
@@ -294,17 +294,17 @@ function updatePowerUpsHUD() {
         </div>
       `;
     }
-    if (activeTypes.includes('size3')) {
+    if (activeTypes.includes('helmet')) {
       html += `
         <div class="powerup-item">
-          <div class="powerup-info size3">
-            <span>TRIPLE SIZE</span>
-            <span id="hud-size3-time"></span>
+          <div class="powerup-info helmet">
+            <span>HELMET</span>
+            <span id="hud-helmet-time"></span>
           </div>
           <div class="powerup-bar-bg">
-            <div class="powerup-bar-fill size3" id="hud-size3-bar"></div>
+            <div class="powerup-bar-fill helmet" id="hud-helmet-bar"></div>
           </div>
-          <div class="powerup-visual visual-size3">x3</div>
+          <div class="powerup-visual visual-helmet">H</div>
         </div>
       `;
     }
@@ -326,10 +326,10 @@ function updatePowerUpsHUD() {
     document.getElementById('hud-size-time').innerText = Math.ceil(game.activePowerUps.playerX2) + 's';
     document.getElementById('hud-size-bar').style.width = pct + '%';
   }
-  if (activeTypes.includes('size3')) {
-    let pct = (game.activePowerUps.playerX3 / 40) * 100;
-    document.getElementById('hud-size3-time').innerText = Math.ceil(game.activePowerUps.playerX3) + 's';
-    document.getElementById('hud-size3-bar').style.width = pct + '%';
+  if (activeTypes.includes('helmet')) {
+    let pct = (game.activePowerUps.playerHelmet / 40) * 100;
+    document.getElementById('hud-helmet-time').innerText = Math.ceil(game.activePowerUps.playerHelmet) + 's';
+    document.getElementById('hud-helmet-bar').style.width = pct + '%';
   }
 }
 
@@ -379,6 +379,12 @@ const playerGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
 const playerMat = new THREE.MeshLambertMaterial({ color: 0x2196F3 });
 const playerMesh = new THREE.Mesh(playerGeo, playerMat);
 scene.add(playerMesh);
+
+const helmetGeo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
+const helmetMat = new THREE.MeshLambertMaterial({ color: 0x00ffff, transparent: true, opacity: 0.6 });
+const helmetMesh = new THREE.Mesh(helmetGeo, helmetMat);
+helmetMesh.visible = false;
+scene.add(helmetMesh);
 
 const enemyGeo = new THREE.SphereGeometry(0.4, 16, 16);
 const enemyMat = new THREE.MeshLambertMaterial({ color: 0xf44336 });
@@ -488,15 +494,23 @@ function animate() {
     game.greyEnemies.forEach(e => e.update(dt));
     game.bitingEnemies.forEach(e => e.update(dt));
     
-    if (game.activePowerUps && game.activePowerUps.playerX3 > 0) {
-      playerMesh.scale.set(3, 3, 3);
-      playerMesh.position.set(game.player.x, 1.3, game.player.y);
-    } else if (game.activePowerUps && game.activePowerUps.playerX2 > 0) {
+    if (game.activePowerUps && game.activePowerUps.playerX2 > 0) {
       playerMesh.scale.set(2, 2, 2);
       playerMesh.position.set(game.player.x, 0.9, game.player.y);
     } else {
       playerMesh.scale.set(1, 1, 1);
       playerMesh.position.set(game.player.x, 0.5, game.player.y);
+    }
+    
+    // Add visual helmet effect
+    if (game.activePowerUps && game.activePowerUps.playerHelmet > 0) {
+      let t = performance.now() / 150;
+      let s = (game.activePowerUps.playerX2 > 0 ? 2 : 1) * (1.1 + Math.sin(t) * 0.1);
+      helmetMesh.scale.set(s, s, s);
+      helmetMesh.position.copy(playerMesh.position);
+      helmetMesh.visible = true;
+    } else {
+      helmetMesh.visible = false;
     }
     
     syncPowerUpMeshes();

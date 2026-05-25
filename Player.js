@@ -41,9 +41,8 @@ export class Player {
   getFootprint(gridX, gridY) {
     let cells = [];
     let size = 1;
-    if (this.game.activePowerUps) {
-      if (this.game.activePowerUps.playerX3 > 0) size = 3;
-      else if (this.game.activePowerUps.playerX2 > 0) size = 2;
+    if (this.game.activePowerUps && this.game.activePowerUps.playerX2 > 0) {
+      size = 2;
     }
     
     for (let dy = 0; dy < size; dy++) {
