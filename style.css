@@ -274,19 +274,19 @@ canvas {
 
 .powerup-info.helmet { color: #00ffff; }
 
-.visual-glue {
-  color: #ffb300;
-  border-color: #ff8f00;
-  text-shadow: 4px 4px 0 #ff8f00;
-  box-shadow: 0 0 15px #ffb300, inset 0 0 15px rgba(255, 179, 0, 0.5);
+.visual-freeze {
+  color: #88ccff;
+  border-color: #88ccff;
+  text-shadow: 0 0 5px #88ccff;
+  box-shadow: 0 0 10px #88ccff;
 }
 
-.powerup-bar-fill.glue {
-  background: linear-gradient(90deg, #ff8f00, #ffb300);
-  box-shadow: 0 0 8px #ffb300;
+.powerup-bar-fill.freeze {
+  background: #88ccff;
+  box-shadow: 0 0 10px #88ccff;
 }
 
-.powerup-info.glue { color: #ffb300; }
+.powerup-info.freeze { color: #88ccff; }
 
 .visual-heart {
   color: #ff073a;

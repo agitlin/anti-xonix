@@ -43,11 +43,9 @@ export class Enemy {
     this.vy = Math.sin(angle) * this.speed;
     if (Math.abs(this.vx) < 2) this.vx = Math.sign(this.vx || 1) * 2;
     if (Math.abs(this.vy) < 2) this.vy = Math.sign(this.vy || 1) * 2;
-    this.isGlued = false;
   }
 
   update(dt) {
-    if (this.isGlued) return;
     if (checkDirectPlayerCollision(this, this.game, dt)) return;
     if (this.game.activePowerUps && this.game.activePowerUps.enemySlow > 0) {
       dt *= 0.4;
@@ -119,11 +117,9 @@ export class GreyEnemy {
     this.vy = Math.sin(angle) * this.speed;
     if (Math.abs(this.vx) < 2) this.vx = Math.sign(this.vx || 1) * 2;
     if (Math.abs(this.vy) < 2) this.vy = Math.sign(this.vy || 1) * 2;
-    this.isGlued = false;
   }
 
   update(dt) {
-    if (this.isGlued) return;
     if (checkDirectPlayerCollision(this, this.game, dt)) return;
     if (this.game.activePowerUps && this.game.activePowerUps.enemySlow > 0) {
       dt *= 0.4;
@@ -187,11 +183,9 @@ export class BitingEnemy {
     this.vy = Math.sin(angle) * this.speed;
     if (Math.abs(this.vx) < 2) this.vx = Math.sign(this.vx || 1) * 2;
     if (Math.abs(this.vy) < 2) this.vy = Math.sign(this.vy || 1) * 2;
-    this.isGlued = false;
   }
 
   update(dt) {
-    if (this.isGlued) return;
     if (checkDirectPlayerCollision(this, this.game, dt)) return;
 
     if (this.game.activePowerUps && this.game.activePowerUps.enemySlow > 0) {
@@ -266,5 +260,74 @@ export class BitingEnemy {
     }
     // Eat captured area
     this.game.setCell(x, y, CELL_EMPTY);
+  }
+}
+
+export class EatingEnemy {
+  constructor(game, x, y) {
+    this.game = game;
+    this.x = x;
+    this.y = y;
+    this.speed = 3; // Half of normal enemy speed (6)
+    let angle = Math.random() * Math.PI * 2;
+    this.vx = Math.cos(angle) * this.speed;
+    this.vy = Math.sin(angle) * this.speed;
+    if (Math.abs(this.vx) < 1) this.vx = Math.sign(this.vx || 1) * 1;
+    if (Math.abs(this.vy) < 1) this.vy = Math.sign(this.vy || 1) * 1;
+  }
+
+  update(dt) {
+    if (checkDirectPlayerCollision(this, this.game, dt)) return;
+
+    if (this.game.activePowerUps && this.game.activePowerUps.enemySlow > 0) {
+      dt *= 0.4;
+    }
+    let nextX = this.x + this.vx * dt;
+    let nextY = this.y + this.vy * dt;
+
+    let r = 0.4;
+    let left = Math.floor(nextX - r);
+    let right = Math.floor(nextX + r);
+    let top = Math.floor(nextY - r);
+    let bottom = Math.floor(nextY + r);
+
+    let bounceX = false;
+    let bounceY = false;
+
+    const BORDER_THICKNESS = 2; // from Game.js
+
+    // Bounce off permanent borders
+    if (left < BORDER_THICKNESS || right >= GRID_SIZE - BORDER_THICKNESS) {
+      bounceX = true;
+    }
+    if (top < BORDER_THICKNESS || bottom >= GRID_SIZE - BORDER_THICKNESS) {
+      bounceY = true;
+    }
+
+    if (bounceX) this.vx *= -1;
+    if (bounceY) this.vy *= -1;
+
+    // Check collision with trail
+    let leftCell = this.game.getCell(left, Math.floor(this.y));
+    let rightCell = this.game.getCell(right, Math.floor(this.y));
+    let topCell = this.game.getCell(Math.floor(this.x), top);
+    let bottomCell = this.game.getCell(Math.floor(this.x), bottom);
+    
+    if (leftCell === CELL_TRAIL || rightCell === CELL_TRAIL || topCell === CELL_TRAIL || bottomCell === CELL_TRAIL) {
+      this.game.loseLife(this.x, this.y);
+      return;
+    }
+
+    if (!bounceX) this.x += this.vx * dt;
+    if (!bounceY) this.y += this.vy * dt;
+
+    // Eat current cell if filled
+    let cx = Math.floor(this.x);
+    let cy = Math.floor(this.y);
+    if (this.game.getCell(cx, cy) === CELL_FILLED &&
+        cx >= BORDER_THICKNESS && cx < GRID_SIZE - BORDER_THICKNESS &&
+        cy >= BORDER_THICKNESS && cy < GRID_SIZE - BORDER_THICKNESS) {
+      this.game.setCell(cx, cy, CELL_EMPTY);
+    }
   }
 }

@@ -31,10 +31,12 @@ export class Game {
     this.enemies = [];
     this.greyEnemies = [];
     this.bitingEnemies = [];
+    this.eatingEnemies = [];
     this.player = null;
     this.gameOver = false;
     this.gameWon = false;
     this.inCollisionPause = false;
+    this.inIntro = true;
     this.impactPoint = null;
     this.powerUps = [];
     this.powerUpSpawnTimer = 0;
@@ -43,7 +45,8 @@ export class Game {
       playerSpeed: 0,
       playerX2: 0,
       playerHelmet: 0,
-      playerGlue: 0,
+      playerFreeze: 0,
+      frozenEnemy: null,
       heartPopup: 0
     };
     
@@ -215,8 +218,11 @@ export class Game {
     if (this.activePowerUps.playerHelmet > 0) {
       this.activePowerUps.playerHelmet = Math.max(0, this.activePowerUps.playerHelmet - dt);
     }
-    if (this.activePowerUps.playerGlue > 0) {
-      this.activePowerUps.playerGlue = Math.max(0, this.activePowerUps.playerGlue - dt);
+    if (this.activePowerUps.playerFreeze > 0) {
+      this.activePowerUps.playerFreeze = Math.max(0, this.activePowerUps.playerFreeze - dt);
+      if (this.activePowerUps.playerFreeze === 0) {
+        this.activePowerUps.frozenEnemy = null;
+      }
     }
     if (this.activePowerUps.heartPopup > 0) {
       this.activePowerUps.heartPopup = Math.max(0, this.activePowerUps.heartPopup - dt);
@@ -232,7 +238,7 @@ export class Game {
 
     // 3. Spawning timer
     this.powerUpSpawnTimer += dt;
-    if (this.powerUpSpawnTimer >= 8) { // spawn check every 8 seconds
+    if (this.powerUpSpawnTimer >= 4) { // spawn check every 4 seconds
       this.powerUpSpawnTimer = 0;
       if (this.powerUps.length < 5) { // max 5
         this.spawnPowerUp();
@@ -257,7 +263,7 @@ export class Game {
 
     if (emptyCells.length > 0) {
       let cell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-      let types = ['S', 'A', 'Heart', 'x2', 'Helmet', 'Glue'];
+      let types = ['S', 'A', 'Heart', 'x2', 'Helmet', 'Freeze'];
       let type = types[Math.floor(Math.random() * types.length)];
       this.powerUps.push({
         x: cell.x,
@@ -291,8 +297,13 @@ export class Game {
       this.activePowerUps.playerX2 = 40;
     } else if (p.type === 'Helmet') {
       this.activePowerUps.playerHelmet = 40;
-    } else if (p.type === 'Glue') {
-      this.activePowerUps.playerGlue = 40;
+    } else if (p.type === 'Freeze') {
+        this.activePowerUps.playerFreeze = 40; // 40 seconds
+        let allEnemies = [...this.enemies, ...this.greyEnemies, ...this.bitingEnemies];
+        if (this.eatingEnemies) allEnemies.push(...this.eatingEnemies);
+        if (allEnemies.length > 0) {
+          this.activePowerUps.frozenEnemy = allEnemies[Math.floor(Math.random() * allEnemies.length)];
+        }
     }
   }
 }

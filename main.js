@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { Game, GRID_SIZE, CELL_EMPTY, CELL_FILLED, CELL_TRAIL } from './Game.js';
 import { Player } from './Player.js';
-import { Enemy, GreyEnemy, BitingEnemy } from './Enemy.js';
+import { Enemy, GreyEnemy, BitingEnemy, EatingEnemy } from './Enemy.js';
+import * as ScoreManager from './ScoreManager.js';
 
 const uiScore = document.getElementById('score');
 const uiLives = document.getElementById('lives');
@@ -109,7 +110,7 @@ function getHexColorString(type) {
     case 'Heart': return '#ff073a';
     case 'x2': return '#ffeb3b';
     case 'Helmet': return '#00ffff';
-    case 'Glue': return '#ffb300';
+    case 'Freeze': return '#88ccff';
   }
   return '#ffffff';
 }
@@ -121,7 +122,7 @@ function getColorForType(type) {
     case 'Heart': return 0xff073a;
     case 'x2': return 0xffeb3b;
     case 'Helmet': return 0x00ffff;
-    case 'Glue': return 0xffb300;
+    case 'Freeze': return 0x88ccff;
   }
   return 0xffffff;
 }
@@ -129,6 +130,7 @@ function getColorForType(type) {
 function getTextForType(type) {
   switch (type) {
     case 'Heart': return '♥';
+    case 'Freeze': return 'F';
     default: return type;
   }
 }
@@ -238,7 +240,7 @@ function updatePowerUpsHUD() {
   if (game.activePowerUps.playerSpeed > 0) activeTypes.push('speed');
   if (game.activePowerUps.playerX2 > 0) activeTypes.push('size');
   if (game.activePowerUps.playerHelmet > 0) activeTypes.push('helmet');
-  if (game.activePowerUps.playerGlue > 0) activeTypes.push('glue');
+  if (game.activePowerUps.playerFreeze > 0) activeTypes.push('freeze');
   
   let stateStr = activeTypes.join(',');
   
@@ -311,17 +313,17 @@ function updatePowerUpsHUD() {
         </div>
       `;
     }
-    if (activeTypes.includes('glue')) {
+    if (activeTypes.includes('freeze')) {
       html += `
         <div class="powerup-item">
-          <div class="powerup-info glue">
-            <span>GLUE</span>
-            <span id="hud-glue-time"></span>
+          <div class="powerup-info freeze">
+            <span>FREEZE</span>
+            <span id="hud-freeze-time"></span>
           </div>
           <div class="powerup-bar-bg">
-            <div class="powerup-bar-fill glue" id="hud-glue-bar"></div>
+            <div class="powerup-bar-fill freeze" id="hud-freeze-bar"></div>
           </div>
-          <div class="powerup-visual visual-glue">G</div>
+          <div class="powerup-visual visual-freeze">F</div>
         </div>
       `;
     }
@@ -348,10 +350,10 @@ function updatePowerUpsHUD() {
     document.getElementById('hud-helmet-time').innerText = Math.ceil(game.activePowerUps.playerHelmet) + 's';
     document.getElementById('hud-helmet-bar').style.width = pct + '%';
   }
-  if (activeTypes.includes('glue')) {
-    let pct = (game.activePowerUps.playerGlue / 40) * 100;
-    document.getElementById('hud-glue-time').innerText = Math.ceil(game.activePowerUps.playerGlue) + 's';
-    document.getElementById('hud-glue-bar').style.width = pct + '%';
+  if (activeTypes.includes('freeze')) {
+    let pct = (game.activePowerUps.playerFreeze / 40) * 100;
+    document.getElementById('hud-freeze-time').innerText = Math.ceil(game.activePowerUps.playerFreeze) + 's';
+    document.getElementById('hud-freeze-bar').style.width = pct + '%';
   }
 }
 
@@ -384,6 +386,35 @@ function spawnLevelEntities() {
       game.bitingEnemies.push(new BitingEnemy(game, ex, ey));
     }
   }
+
+  if (game.level > 4) {
+    let numEating = game.level - 4;
+    for (let i = 0; i < numEating; i++) {
+      let ex = 5 + Math.random() * (GRID_SIZE - 10);
+      let ey = 5 + Math.random() * (GRID_SIZE - 10);
+      game.eatingEnemies.push(new EatingEnemy(game, ex, ey));
+    }
+  }
+
+  // Populate Intro Overlay
+  document.getElementById('intro-level').innerText = 'LEVEL ' + game.level;
+  let detailsHtml = `
+    <ul style="list-style:none; padding:0; margin:0;">
+      <li style="margin-bottom:10px;"><span style="color:#ff0000;">■</span> Red Enemies: ${game.enemies.length}</li>
+      <li style="margin-bottom:10px;"><span style="color:#cccccc;">■</span> Grey Enemies: ${game.greyEnemies.length}</li>
+  `;
+  if (game.bitingEnemies.length > 0) {
+    detailsHtml += `<li style="margin-bottom:10px;"><span style="color:#ff9800;">■</span> Biting Enemies (Orange): ${game.bitingEnemies.length}</li>`;
+  }
+  if (game.eatingEnemies && game.eatingEnemies.length > 0) {
+    detailsHtml += `<li style="margin-bottom:10px;"><span style="color:#9c27b0;">■</span> Eating Enemies (Purple): ${game.eatingEnemies.length}</li>`;
+  }
+  detailsHtml += `
+    <li style="margin-top:20px; color:#aaa;">Powerups: Slow(S), Speed(A), x2, Helmet, Freeze(F), Extra Life(♥)</li>
+    </ul>
+  `;
+  document.getElementById('intro-details').innerHTML = detailsHtml;
+  document.getElementById('intro-overlay').style.display = 'flex';
 }
 
 spawnLevelEntities();
@@ -408,18 +439,20 @@ const helmetMesh = new THREE.Mesh(helmetGeo, helmetMat);
 helmetMesh.visible = false;
 scene.add(helmetMesh);
 
-const enemyGeo = new THREE.SphereGeometry(0.4, 16, 16);
-const enemyMat = new THREE.MeshLambertMaterial({ color: 0xf44336 });
-const gluedEnemyMat = new THREE.MeshLambertMaterial({ color: 0xffb300 });
+const enemyGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+const enemyMat = new THREE.MeshLambertMaterial({ color: 0xff0000 });
 const enemyMeshes = [];
 
 const greyEnemyMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
-const gluedGreyEnemyMat = new THREE.MeshLambertMaterial({ color: 0xffb300 });
 const greyEnemyMeshes = [];
 
 const bitingEnemyMat = new THREE.MeshLambertMaterial({ color: 0xff9800 });
-const gluedBitingEnemyMat = new THREE.MeshLambertMaterial({ color: 0xffb300 });
 const bitingEnemyMeshes = [];
+
+const eatingEnemyMat = new THREE.MeshLambertMaterial({ color: 0x9c27b0 }); // Purple for eating enemy
+const eatingEnemyMeshes = [];
+
+const frozenEnemyMat = new THREE.MeshLambertMaterial({ color: 0x88ccff });
 
 const dummy = new THREE.Object3D();
 const dummyColor = new THREE.Color();
@@ -468,7 +501,11 @@ function updateInstancedMesh(flash = false) {
 
 window.addEventListener('keydown', (e) => {
   if (e.code === 'Space') {
-    if (game.inCollisionPause) {
+    if (game.inIntro) {
+      game.inIntro = false;
+      document.getElementById('intro-overlay').style.display = 'none';
+      lastTime = performance.now();
+    } else if (game.inCollisionPause) {
       game.resumeFromCollision();
       uiCollisionOverlay.style.display = 'none';
       scene.remove(impactMesh);
@@ -499,7 +536,7 @@ function animate() {
   dt = Math.min(dt, 0.1); 
   lastTime = now;
 
-  if (game.isPaused) {
+  if (game.isPaused || game.inIntro) {
     renderer.render(scene, camera);
     return;
   }
@@ -531,25 +568,9 @@ function animate() {
     
     game.updatePowerUps(dt);
     game.player.update(dt);
-    game.enemies.forEach(e => e.update(dt));
-    game.greyEnemies.forEach(e => e.update(dt));
-    game.bitingEnemies.forEach(e => e.update(dt));
-
-    if (game.activePowerUps.playerGlue > 0) {
-      let allEnemies = [...game.enemies, ...game.greyEnemies, ...game.bitingEnemies];
-      for (let i = 0; i < allEnemies.length; i++) {
-        for (let j = i + 1; j < allEnemies.length; j++) {
-          let e1 = allEnemies[i];
-          let e2 = allEnemies[j];
-          let dx = e1.x - e2.x;
-          let dy = e1.y - e2.y;
-          if (Math.sqrt(dx*dx + dy*dy) < 0.8) {
-            e1.isGlued = true;
-            e2.isGlued = true;
-          }
-        }
-      }
-    }
+    game.enemies.forEach(e => { if (e !== game.activePowerUps.frozenEnemy) e.update(dt); });
+    game.greyEnemies.forEach(e => { if (e !== game.activePowerUps.frozenEnemy) e.update(dt); });
+    game.bitingEnemies.forEach(e => { if (e !== game.activePowerUps.frozenEnemy) e.update(dt); });
     
     if (game.activePowerUps && game.activePowerUps.playerX2 > 0) {
       playerMesh.scale.set(2, 2, 2);
@@ -580,11 +601,7 @@ function animate() {
     }
     game.enemies.forEach((e, i) => {
       enemyMeshes[i].position.set(e.x, 0.5, e.y);
-      if (e.isGlued) {
-        enemyMeshes[i].material = gluedEnemyMat;
-      } else {
-        enemyMeshes[i].material = enemyMat;
-      }
+      enemyMeshes[i].material = (e === game.activePowerUps.frozenEnemy) ? frozenEnemyMat : enemyMat;
     });
 
     while (greyEnemyMeshes.length < game.greyEnemies.length) {
@@ -594,32 +611,33 @@ function animate() {
     }
     game.greyEnemies.forEach((e, i) => {
       greyEnemyMeshes[i].position.set(e.x, 0.5, e.y);
-      if (e.isGlued) {
-        greyEnemyMeshes[i].material = gluedGreyEnemyMat;
-      } else {
-        greyEnemyMeshes[i].material = greyEnemyMat;
-      }
+      greyEnemyMeshes[i].material = (e === game.activePowerUps.frozenEnemy) ? frozenEnemyMat : greyEnemyMat;
     });
 
     while (bitingEnemyMeshes.length < game.bitingEnemies.length) {
-      // Use something slightly jagged or just a distinct orange sphere
       let m = new THREE.Mesh(enemyGeo, bitingEnemyMat);
-      // Give them a slight pulse or scale to look biting
-      let s = 1 + Math.sin(performance.now() / 150) * 0.15;
-      m.scale.set(s, s, s);
       scene.add(m);
       bitingEnemyMeshes.push(m);
     }
     game.bitingEnemies.forEach((e, i) => {
       bitingEnemyMeshes[i].position.set(e.x, 0.5, e.y);
-      if (e.isGlued) {
-        bitingEnemyMeshes[i].material = gluedBitingEnemyMat;
+      bitingEnemyMeshes[i].material = (e === game.activePowerUps.frozenEnemy) ? frozenEnemyMat : bitingEnemyMat;
+      if (e === game.activePowerUps.frozenEnemy) {
         bitingEnemyMeshes[i].scale.set(1, 1, 1);
       } else {
-        bitingEnemyMeshes[i].material = bitingEnemyMat;
         let s = 1 + Math.sin(performance.now() / 150 + i) * 0.15;
         bitingEnemyMeshes[i].scale.set(s, s, s);
       }
+    });
+
+    while (eatingEnemyMeshes.length < game.eatingEnemies.length) {
+      let m = new THREE.Mesh(enemyGeo, eatingEnemyMat);
+      scene.add(m);
+      eatingEnemyMeshes.push(m);
+    }
+    game.eatingEnemies.forEach((e, i) => {
+      eatingEnemyMeshes[i].position.set(e.x, 0.5, e.y);
+      eatingEnemyMeshes[i].material = (e === game.activePowerUps.frozenEnemy) ? frozenEnemyMat : eatingEnemyMat;
     });
 
     updateInstancedMesh(false);
