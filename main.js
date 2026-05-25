@@ -466,12 +466,23 @@ function updateInstancedMesh(flash = false) {
 }
 
 window.addEventListener('keydown', (e) => {
-  if (e.code === 'Space' && game.inCollisionPause) {
-    game.resumeFromCollision();
-    uiCollisionOverlay.style.display = 'none';
-    scene.remove(impactMesh);
-    scene.background = new THREE.Color(0x222222);
-    updateInstancedMesh(false); // Restore normal colors
+  if (e.code === 'Space') {
+    if (game.inCollisionPause) {
+      game.resumeFromCollision();
+      uiCollisionOverlay.style.display = 'none';
+      scene.remove(impactMesh);
+      scene.background = new THREE.Color(0x222222);
+      updateInstancedMesh(false); // Restore normal colors
+    } else if (!game.gameOver && !game.gameWon) {
+      game.isPaused = !game.isPaused;
+      let pauseOverlay = document.getElementById('pause-overlay');
+      if (game.isPaused) {
+        pauseOverlay.style.display = 'flex';
+      } else {
+        pauseOverlay.style.display = 'none';
+        lastTime = performance.now(); // Prevent large dt jump on resume
+      }
+    }
   }
 });
 
@@ -486,6 +497,11 @@ function animate() {
   // limit dt to avoid huge jumps on lag
   dt = Math.min(dt, 0.1); 
   lastTime = now;
+
+  if (game.isPaused) {
+    renderer.render(scene, camera);
+    return;
+  }
 
   if (game.inCollisionPause) {
     // Just entered collision?

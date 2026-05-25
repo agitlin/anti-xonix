@@ -163,9 +163,21 @@ export class GreyEnemy {
 
     // Check collision with player directly since they share CELL_FILLED
     if (this.game.player && !this.game.gameOver && !this.game.inCollisionPause) {
-      let dx = this.x - this.game.player.x;
-      let dy = this.y - this.game.player.y;
-      if (Math.sqrt(dx*dx + dy*dy) < 0.8) {
+      let isPlayerX2 = this.game.activePowerUps && this.game.activePowerUps.playerX2 > 0;
+      let minX = this.game.player.x - 0.4;
+      let maxX = this.game.player.x + (isPlayerX2 ? 1.4 : 0.4);
+      let minY = this.game.player.y - 0.4;
+      let maxY = this.game.player.y + (isPlayerX2 ? 1.4 : 0.4);
+
+      let closestX = Math.max(minX, Math.min(this.x, maxX));
+      let closestY = Math.max(minY, Math.min(this.y, maxY));
+
+      let dx = this.x - closestX;
+      let dy = this.y - closestY;
+
+      // We subtracted 0.4 from box bounds to account for some padding, 
+      // check distance to that box (with 0.4 radius for the enemy itself)
+      if (Math.sqrt(dx*dx + dy*dy) < 0.4) {
         if (this.game.activePowerUps && this.game.activePowerUps.playerHelmet > 0) {
           // Bounce off player
           this.vx *= -1;
