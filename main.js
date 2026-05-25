@@ -223,65 +223,92 @@ function syncPowerUpMeshes() {
   }
 }
 
+let currentPowerUpsState = '';
+
 function updatePowerUpsHUD() {
   if (!activePowerupsContainer) return;
-  let html = '';
-  if (game.activePowerUps.heartPopup > 0) {
-    html += `
-      <div class="powerup-item">
-        <div class="powerup-info heart">
-          <span>EXTRA LIFE!</span>
+  
+  let activeTypes = [];
+  if (game.activePowerUps.heartPopup > 0) activeTypes.push('heart');
+  if (game.activePowerUps.enemySlow > 0) activeTypes.push('slow');
+  if (game.activePowerUps.playerSpeed > 0) activeTypes.push('speed');
+  if (game.activePowerUps.playerX2 > 0) activeTypes.push('size');
+  
+  let stateStr = activeTypes.join(',');
+  
+  if (currentPowerUpsState !== stateStr) {
+    currentPowerUpsState = stateStr;
+    let html = '';
+    if (activeTypes.includes('heart')) {
+      html += `
+        <div class="powerup-item">
+          <div class="powerup-info heart">
+            <span>EXTRA LIFE!</span>
+          </div>
+          <div class="powerup-visual visual-heart">&hearts;</div>
         </div>
-        <div class="powerup-visual visual-heart">&hearts;</div>
-      </div>
-    `;
+      `;
+    }
+    if (activeTypes.includes('slow')) {
+      html += `
+        <div class="powerup-item">
+          <div class="powerup-info slow">
+            <span>SLOW ENEMIES</span>
+            <span id="hud-slow-time"></span>
+          </div>
+          <div class="powerup-bar-bg">
+            <div class="powerup-bar-fill slow" id="hud-slow-bar"></div>
+          </div>
+          <div class="powerup-visual visual-slow">S</div>
+        </div>
+      `;
+    }
+    if (activeTypes.includes('speed')) {
+      html += `
+        <div class="powerup-item">
+          <div class="powerup-info speed">
+            <span>SPEED BOOST</span>
+            <span id="hud-speed-time"></span>
+          </div>
+          <div class="powerup-bar-bg">
+            <div class="powerup-bar-fill speed" id="hud-speed-bar"></div>
+          </div>
+          <div class="powerup-visual visual-speed">&raquo;&raquo;</div>
+        </div>
+      `;
+    }
+    if (activeTypes.includes('size')) {
+      html += `
+        <div class="powerup-item">
+          <div class="powerup-info size">
+            <span>DOUBLE SIZE</span>
+            <span id="hud-size-time"></span>
+          </div>
+          <div class="powerup-bar-bg">
+            <div class="powerup-bar-fill size" id="hud-size-bar"></div>
+          </div>
+          <div class="powerup-visual visual-size">x2</div>
+        </div>
+      `;
+    }
+    activePowerupsContainer.innerHTML = html;
   }
-  if (game.activePowerUps.enemySlow > 0) {
+  
+  if (activeTypes.includes('slow')) {
     let pct = (game.activePowerUps.enemySlow / 40) * 100;
-    html += `
-      <div class="powerup-item">
-        <div class="powerup-info slow">
-          <span>SLOW ENEMIES</span>
-          <span>${Math.ceil(game.activePowerUps.enemySlow)}s</span>
-        </div>
-        <div class="powerup-bar-bg">
-          <div class="powerup-bar-fill slow" style="width: ${pct}%"></div>
-        </div>
-        <div class="powerup-visual visual-slow">S</div>
-      </div>
-    `;
+    document.getElementById('hud-slow-time').innerText = Math.ceil(game.activePowerUps.enemySlow) + 's';
+    document.getElementById('hud-slow-bar').style.width = pct + '%';
   }
-  if (game.activePowerUps.playerSpeed > 0) {
+  if (activeTypes.includes('speed')) {
     let pct = (game.activePowerUps.playerSpeed / 40) * 100;
-    html += `
-      <div class="powerup-item">
-        <div class="powerup-info speed">
-          <span>SPEED BOOST</span>
-          <span>${Math.ceil(game.activePowerUps.playerSpeed)}s</span>
-        </div>
-        <div class="powerup-bar-bg">
-          <div class="powerup-bar-fill speed" style="width: ${pct}%"></div>
-        </div>
-        <div class="powerup-visual visual-speed">&raquo;&raquo;</div>
-      </div>
-    `;
+    document.getElementById('hud-speed-time').innerText = Math.ceil(game.activePowerUps.playerSpeed) + 's';
+    document.getElementById('hud-speed-bar').style.width = pct + '%';
   }
-  if (game.activePowerUps.playerX2 > 0) {
+  if (activeTypes.includes('size')) {
     let pct = (game.activePowerUps.playerX2 / 40) * 100;
-    html += `
-      <div class="powerup-item">
-        <div class="powerup-info size">
-          <span>DOUBLE SIZE</span>
-          <span>${Math.ceil(game.activePowerUps.playerX2)}s</span>
-        </div>
-        <div class="powerup-bar-bg">
-          <div class="powerup-bar-fill size" style="width: ${pct}%"></div>
-        </div>
-        <div class="powerup-visual visual-size">x2</div>
-      </div>
-    `;
+    document.getElementById('hud-size-time').innerText = Math.ceil(game.activePowerUps.playerX2) + 's';
+    document.getElementById('hud-size-bar').style.width = pct + '%';
   }
-  activePowerupsContainer.innerHTML = html;
 }
 
 let game = new Game();
