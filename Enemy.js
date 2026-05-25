@@ -1,5 +1,37 @@
 import { CELL_EMPTY, CELL_FILLED, CELL_TRAIL, GRID_SIZE } from './Game.js';
 
+function checkDirectPlayerCollision(enemy, game, dt) {
+  if (!game.player || game.gameOver || game.inCollisionPause) return false;
+  
+  let isPlayerX2 = game.activePowerUps && game.activePowerUps.playerX2 > 0;
+  let minX = game.player.x - 0.4;
+  let maxX = game.player.x + (isPlayerX2 ? 1.4 : 0.4);
+  let minY = game.player.y - 0.4;
+  let maxY = game.player.y + (isPlayerX2 ? 1.4 : 0.4);
+
+  let closestX = Math.max(minX, Math.min(enemy.x, maxX));
+  let closestY = Math.max(minY, Math.min(enemy.y, maxY));
+
+  let dx = enemy.x - closestX;
+  let dy = enemy.y - closestY;
+
+  if (Math.sqrt(dx*dx + dy*dy) < 0.4) {
+    if (game.activePowerUps && game.activePowerUps.playerHelmet > 0) {
+      // Bounce off player
+      enemy.vx *= -1;
+      enemy.vy *= -1;
+      // Apply bounce immediately to separate
+      enemy.x += enemy.vx * dt;
+      enemy.y += enemy.vy * dt;
+      return true; // Handled as bounce
+    } else {
+      game.loseLife(enemy.x, enemy.y);
+      return true; // Handled as death
+    }
+  }
+  return false;
+}
+
 export class Enemy {
   constructor(game, x, y) {
     this.game = game;
@@ -16,6 +48,7 @@ export class Enemy {
 
   update(dt) {
     if (this.isGlued) return;
+    if (checkDirectPlayerCollision(this, this.game, dt)) return;
     if (this.game.activePowerUps && this.game.activePowerUps.enemySlow > 0) {
       dt *= 0.4;
     }
@@ -46,8 +79,6 @@ export class Enemy {
     let topCell = this.game.getCell(Math.floor(this.x), top);
     let bottomCell = this.game.getCell(Math.floor(this.x), bottom);
     
-    if (topCell === CELL_FILLED || bottomCell === CELL_FILLED) {
-      bounceY = true;
     if (topCell === CELL_FILLED || bottomCell === CELL_FILLED) {
       bounceY = true;
     } else if (topCell === CELL_TRAIL || bottomCell === CELL_TRAIL) {
@@ -93,6 +124,7 @@ export class GreyEnemy {
 
   update(dt) {
     if (this.isGlued) return;
+    if (checkDirectPlayerCollision(this, this.game, dt)) return;
     if (this.game.activePowerUps && this.game.activePowerUps.enemySlow > 0) {
       dt *= 0.4;
     }
@@ -141,36 +173,6 @@ export class GreyEnemy {
 
     if (!bounceX) this.x += this.vx * dt;
     if (!bounceY) this.y += this.vy * dt;
-
-    // Check collision with player directly since they share CELL_FILLED
-    if (this.game.player && !this.game.gameOver && !this.game.inCollisionPause) {
-      let isPlayerX2 = this.game.activePowerUps && this.game.activePowerUps.playerX2 > 0;
-      let minX = this.game.player.x - 0.4;
-      let maxX = this.game.player.x + (isPlayerX2 ? 1.4 : 0.4);
-      let minY = this.game.player.y - 0.4;
-      let maxY = this.game.player.y + (isPlayerX2 ? 1.4 : 0.4);
-
-      let closestX = Math.max(minX, Math.min(this.x, maxX));
-      let closestY = Math.max(minY, Math.min(this.y, maxY));
-
-      let dx = this.x - closestX;
-      let dy = this.y - closestY;
-
-      // We subtracted 0.4 from box bounds to account for some padding, 
-      // check distance to that box (with 0.4 radius for the enemy itself)
-      if (Math.sqrt(dx*dx + dy*dy) < 0.4) {
-        if (this.game.activePowerUps && this.game.activePowerUps.playerHelmet > 0) {
-          // Bounce off player
-          this.vx *= -1;
-          this.vy *= -1;
-          // Apply bounce immediately to separate
-          this.x += this.vx * dt;
-          this.y += this.vy * dt;
-        } else {
-          this.game.loseLife(this.x, this.y);
-        }
-      }
-    }
   }
 }
 
@@ -190,6 +192,8 @@ export class BitingEnemy {
 
   update(dt) {
     if (this.isGlued) return;
+    if (checkDirectPlayerCollision(this, this.game, dt)) return;
+
     if (this.game.activePowerUps && this.game.activePowerUps.enemySlow > 0) {
       dt *= 0.4;
     }
