@@ -109,6 +109,7 @@ function getHexColorString(type) {
     case 'Heart': return '#ff073a';
     case 'x2': return '#ffeb3b';
     case 'Helmet': return '#00ffff';
+    case 'Glue': return '#ffb300';
   }
   return '#ffffff';
 }
@@ -120,6 +121,7 @@ function getColorForType(type) {
     case 'Heart': return 0xff073a;
     case 'x2': return 0xffeb3b;
     case 'Helmet': return 0x00ffff;
+    case 'Glue': return 0xffb300;
   }
   return 0xffffff;
 }
@@ -236,6 +238,7 @@ function updatePowerUpsHUD() {
   if (game.activePowerUps.playerSpeed > 0) activeTypes.push('speed');
   if (game.activePowerUps.playerX2 > 0) activeTypes.push('size');
   if (game.activePowerUps.playerHelmet > 0) activeTypes.push('helmet');
+  if (game.activePowerUps.playerGlue > 0) activeTypes.push('glue');
   
   let stateStr = activeTypes.join(',');
   
@@ -308,6 +311,20 @@ function updatePowerUpsHUD() {
         </div>
       `;
     }
+    if (activeTypes.includes('glue')) {
+      html += `
+        <div class="powerup-item">
+          <div class="powerup-info glue">
+            <span>GLUE</span>
+            <span id="hud-glue-time"></span>
+          </div>
+          <div class="powerup-bar-bg">
+            <div class="powerup-bar-fill glue" id="hud-glue-bar"></div>
+          </div>
+          <div class="powerup-visual visual-glue">G</div>
+        </div>
+      `;
+    }
     activePowerupsContainer.innerHTML = html;
   }
   
@@ -330,6 +347,11 @@ function updatePowerUpsHUD() {
     let pct = (game.activePowerUps.playerHelmet / 40) * 100;
     document.getElementById('hud-helmet-time').innerText = Math.ceil(game.activePowerUps.playerHelmet) + 's';
     document.getElementById('hud-helmet-bar').style.width = pct + '%';
+  }
+  if (activeTypes.includes('glue')) {
+    let pct = (game.activePowerUps.playerGlue / 40) * 100;
+    document.getElementById('hud-glue-time').innerText = Math.ceil(game.activePowerUps.playerGlue) + 's';
+    document.getElementById('hud-glue-bar').style.width = pct + '%';
   }
 }
 
@@ -388,12 +410,14 @@ scene.add(helmetMesh);
 
 const enemyGeo = new THREE.SphereGeometry(0.4, 16, 16);
 const enemyMat = new THREE.MeshLambertMaterial({ color: 0xf44336 });
+const gluedEnemyMat = new THREE.MeshLambertMaterial({ color: 0xffb300 });
 const enemyMeshes = [];
 
 const greyEnemyMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
 const greyEnemyMeshes = [];
 
 const bitingEnemyMat = new THREE.MeshLambertMaterial({ color: 0xff9800 });
+const gluedBitingEnemyMat = new THREE.MeshLambertMaterial({ color: 0xffb300 });
 const bitingEnemyMeshes = [];
 
 const dummy = new THREE.Object3D();
@@ -523,6 +547,11 @@ function animate() {
     }
     game.enemies.forEach((e, i) => {
       enemyMeshes[i].position.set(e.x, 0.5, e.y);
+      if (e.isGlued) {
+        enemyMeshes[i].material = gluedEnemyMat;
+      } else {
+        enemyMeshes[i].material = enemyMat;
+      }
     });
 
     while (greyEnemyMeshes.length < game.greyEnemies.length) {
@@ -545,8 +574,14 @@ function animate() {
     }
     game.bitingEnemies.forEach((e, i) => {
       bitingEnemyMeshes[i].position.set(e.x, 0.5, e.y);
-      let s = 1 + Math.sin(performance.now() / 150 + i) * 0.15;
-      bitingEnemyMeshes[i].scale.set(s, s, s);
+      if (e.isGlued) {
+        bitingEnemyMeshes[i].material = gluedBitingEnemyMat;
+        bitingEnemyMeshes[i].scale.set(1, 1, 1);
+      } else {
+        bitingEnemyMeshes[i].material = bitingEnemyMat;
+        let s = 1 + Math.sin(performance.now() / 150 + i) * 0.15;
+        bitingEnemyMeshes[i].scale.set(s, s, s);
+      }
     });
 
     updateInstancedMesh(false);
