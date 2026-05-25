@@ -260,6 +260,20 @@ canvas {
   box-shadow: 0 0 15px #ffeb3b, inset 0 0 15px rgba(255, 235, 59, 0.5);
 }
 
+.visual-size3 {
+  color: #d500f9;
+  border-color: #aa00ff;
+  text-shadow: 4px 4px 0 #aa00ff;
+  box-shadow: 0 0 15px #d500f9, inset 0 0 15px rgba(213, 0, 249, 0.5);
+}
+
+.powerup-bar-fill.size3 {
+  background: linear-gradient(90deg, #aa00ff, #d500f9);
+  box-shadow: 0 0 8px #d500f9;
+}
+
+.powerup-info.size3 { color: #d500f9; }
+
 .visual-heart {
   color: #ff073a;
   border-color: #d50000;

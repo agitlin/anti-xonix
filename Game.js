@@ -22,6 +22,7 @@ export class Game {
 
   nextLevel() {
     this.level++;
+    this.lives++;
     this.resetLevel();
   }
 
@@ -29,6 +30,7 @@ export class Game {
     this.grid = [];
     this.enemies = [];
     this.greyEnemies = [];
+    this.bitingEnemies = [];
     this.player = null;
     this.gameOver = false;
     this.gameWon = false;
@@ -40,6 +42,7 @@ export class Game {
       enemySlow: 0,
       playerSpeed: 0,
       playerX2: 0,
+      playerX3: 0,
       heartPopup: 0
     };
     
@@ -159,6 +162,7 @@ export class Game {
       enemySlow: 0,
       playerSpeed: 0,
       playerX2: 0,
+      playerX3: 0,
       heartPopup: 0
     };
     this.powerUps = [];
@@ -206,6 +210,9 @@ export class Game {
     if (this.activePowerUps.playerX2 > 0) {
       this.activePowerUps.playerX2 = Math.max(0, this.activePowerUps.playerX2 - dt);
     }
+    if (this.activePowerUps.playerX3 > 0) {
+      this.activePowerUps.playerX3 = Math.max(0, this.activePowerUps.playerX3 - dt);
+    }
     if (this.activePowerUps.heartPopup > 0) {
       this.activePowerUps.heartPopup = Math.max(0, this.activePowerUps.heartPopup - dt);
     }
@@ -220,9 +227,9 @@ export class Game {
 
     // 3. Spawning timer
     this.powerUpSpawnTimer += dt;
-    if (this.powerUpSpawnTimer >= 15) { // spawn check every 15 seconds
+    if (this.powerUpSpawnTimer >= 8) { // spawn check every 8 seconds
       this.powerUpSpawnTimer = 0;
-      if (this.powerUps.length < 3) {
+      if (this.powerUps.length < 5) { // max 5
         this.spawnPowerUp();
       }
     }
@@ -245,7 +252,7 @@ export class Game {
 
     if (emptyCells.length > 0) {
       let cell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-      let types = ['S', 'A', 'Heart', 'x2'];
+      let types = ['S', 'A', 'Heart', 'x2', 'x3'];
       let type = types[Math.floor(Math.random() * types.length)];
       this.powerUps.push({
         x: cell.x,
@@ -277,6 +284,8 @@ export class Game {
       this.activePowerUps.playerSpeed = 40;
     } else if (p.type === 'x2') {
       this.activePowerUps.playerX2 = 40;
+    } else if (p.type === 'x3') {
+      this.activePowerUps.playerX3 = 40;
     }
   }
 }

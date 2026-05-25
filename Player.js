@@ -39,13 +39,21 @@ export class Player {
   }
 
   getFootprint(gridX, gridY) {
-    let cells = [{ x: gridX, y: gridY }];
-    if (this.game.activePowerUps && this.game.activePowerUps.playerX2 > 0) {
-      let x2 = Math.min(GRID_SIZE - 1, gridX + 1);
-      let y2 = Math.min(GRID_SIZE - 1, gridY + 1);
-      if (x2 !== gridX) cells.push({ x: x2, y: gridY });
-      if (y2 !== gridY) cells.push({ x: gridX, y: y2 });
-      if (x2 !== gridX && y2 !== gridY) cells.push({ x: x2, y: y2 });
+    let cells = [];
+    let size = 1;
+    if (this.game.activePowerUps) {
+      if (this.game.activePowerUps.playerX3 > 0) size = 3;
+      else if (this.game.activePowerUps.playerX2 > 0) size = 2;
+    }
+    
+    for (let dy = 0; dy < size; dy++) {
+      for (let dx = 0; dx < size; dx++) {
+        let x = Math.min(GRID_SIZE - 1, gridX + dx);
+        let y = Math.min(GRID_SIZE - 1, gridY + dy);
+        if (!cells.some(c => c.x === x && c.y === y)) {
+          cells.push({ x, y });
+        }
+      }
     }
     return cells;
   }

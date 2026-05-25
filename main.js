@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Game, GRID_SIZE, CELL_EMPTY, CELL_FILLED, CELL_TRAIL } from './Game.js';
 import { Player } from './Player.js';
-import { Enemy, GreyEnemy } from './Enemy.js';
+import { Enemy, GreyEnemy, BitingEnemy } from './Enemy.js';
 
 const uiScore = document.getElementById('score');
 const uiLives = document.getElementById('lives');
@@ -108,6 +108,7 @@ function getHexColorString(type) {
     case 'A': return '#39ff14';
     case 'Heart': return '#ff073a';
     case 'x2': return '#ffeb3b';
+    case 'x3': return '#d500f9';
   }
   return '#ffffff';
 }
@@ -118,6 +119,7 @@ function getColorForType(type) {
     case 'A': return 0x39ff14;
     case 'Heart': return 0xff073a;
     case 'x2': return 0xffeb3b;
+    case 'x3': return 0xd500f9;
   }
   return 0xffffff;
 }
@@ -233,6 +235,7 @@ function updatePowerUpsHUD() {
   if (game.activePowerUps.enemySlow > 0) activeTypes.push('slow');
   if (game.activePowerUps.playerSpeed > 0) activeTypes.push('speed');
   if (game.activePowerUps.playerX2 > 0) activeTypes.push('size');
+  if (game.activePowerUps.playerX3 > 0) activeTypes.push('size3');
   
   let stateStr = activeTypes.join(',');
   
@@ -291,6 +294,20 @@ function updatePowerUpsHUD() {
         </div>
       `;
     }
+    if (activeTypes.includes('size3')) {
+      html += `
+        <div class="powerup-item">
+          <div class="powerup-info size3">
+            <span>TRIPLE SIZE</span>
+            <span id="hud-size3-time"></span>
+          </div>
+          <div class="powerup-bar-bg">
+            <div class="powerup-bar-fill size3" id="hud-size3-bar"></div>
+          </div>
+          <div class="powerup-visual visual-size3">x3</div>
+        </div>
+      `;
+    }
     activePowerupsContainer.innerHTML = html;
   }
   
@@ -308,6 +325,11 @@ function updatePowerUpsHUD() {
     let pct = (game.activePowerUps.playerX2 / 40) * 100;
     document.getElementById('hud-size-time').innerText = Math.ceil(game.activePowerUps.playerX2) + 's';
     document.getElementById('hud-size-bar').style.width = pct + '%';
+  }
+  if (activeTypes.includes('size3')) {
+    let pct = (game.activePowerUps.playerX3 / 40) * 100;
+    document.getElementById('hud-size3-time').innerText = Math.ceil(game.activePowerUps.playerX3) + 's';
+    document.getElementById('hud-size3-bar').style.width = pct + '%';
   }
 }
 
@@ -330,6 +352,15 @@ function spawnLevelEntities() {
     let ex = 1.5 + fraction * (GRID_SIZE - 3);
     let ey = GRID_SIZE - 1.5;
     game.greyEnemies.push(new GreyEnemy(game, ex, ey));
+  }
+  
+  if (game.level > 3) {
+    let numBiting = game.level - 3;
+    for (let i = 0; i < numBiting; i++) {
+      let ex = 5 + Math.random() * (GRID_SIZE - 10);
+      let ey = 5 + Math.random() * (GRID_SIZE - 10);
+      game.bitingEnemies.push(new BitingEnemy(game, ex, ey));
+    }
   }
 }
 
@@ -355,6 +386,9 @@ const enemyMeshes = [];
 
 const greyEnemyMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
 const greyEnemyMeshes = [];
+
+const bitingEnemyMat = new THREE.MeshLambertMaterial({ color: 0xff9800 });
+const bitingEnemyMeshes = [];
 
 const dummy = new THREE.Object3D();
 const dummyColor = new THREE.Color();
@@ -452,8 +486,12 @@ function animate() {
     game.player.update(dt);
     game.enemies.forEach(e => e.update(dt));
     game.greyEnemies.forEach(e => e.update(dt));
+    game.bitingEnemies.forEach(e => e.update(dt));
     
-    if (game.activePowerUps && game.activePowerUps.playerX2 > 0) {
+    if (game.activePowerUps && game.activePowerUps.playerX3 > 0) {
+      playerMesh.scale.set(3, 3, 3);
+      playerMesh.position.set(game.player.x, 1.3, game.player.y);
+    } else if (game.activePowerUps && game.activePowerUps.playerX2 > 0) {
       playerMesh.scale.set(2, 2, 2);
       playerMesh.position.set(game.player.x, 0.9, game.player.y);
     } else {
@@ -480,6 +518,21 @@ function animate() {
     }
     game.greyEnemies.forEach((e, i) => {
       greyEnemyMeshes[i].position.set(e.x, 0.5, e.y);
+    });
+
+    while (bitingEnemyMeshes.length < game.bitingEnemies.length) {
+      // Use something slightly jagged or just a distinct orange sphere
+      let m = new THREE.Mesh(enemyGeo, bitingEnemyMat);
+      // Give them a slight pulse or scale to look biting
+      let s = 1 + Math.sin(performance.now() / 150) * 0.15;
+      m.scale.set(s, s, s);
+      scene.add(m);
+      bitingEnemyMeshes.push(m);
+    }
+    game.bitingEnemies.forEach((e, i) => {
+      bitingEnemyMeshes[i].position.set(e.x, 0.5, e.y);
+      let s = 1 + Math.sin(performance.now() / 150 + i) * 0.15;
+      bitingEnemyMeshes[i].scale.set(s, s, s);
     });
 
     updateInstancedMesh(false);
@@ -540,6 +593,9 @@ restartBtn.addEventListener('click', () => {
   
   greyEnemyMeshes.forEach(m => scene.remove(m));
   greyEnemyMeshes.length = 0;
+  
+  bitingEnemyMeshes.forEach(m => scene.remove(m));
+  bitingEnemyMeshes.length = 0;
   
   spawnLevelEntities();
 });
