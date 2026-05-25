@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { Game, GRID_SIZE, CELL_EMPTY, CELL_FILLED, CELL_TRAIL } from './Game.js';
 import { Player } from './Player.js';
 import { Enemy, GreyEnemy, BitingEnemy, EatingEnemy } from './Enemy.js';
-import * as ScoreManager from './ScoreManager.js';
 
 const uiScore = document.getElementById('score');
 const uiLives = document.getElementById('lives');
