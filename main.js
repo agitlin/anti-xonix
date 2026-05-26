@@ -351,6 +351,8 @@ function spawnLevelEntities() {
   game.player = new Player(game);
   game.enemies = [];
   game.greyEnemies = [];
+  game.bitingEnemies = [];
+  game.eatingEnemies = [];
   let numEnemies = 2 + game.level;
   for (let i = 0; i < numEnemies; i++) {
     let ex = 5 + Math.random() * (GRID_SIZE - 10);
@@ -567,6 +569,7 @@ function animate() {
     game.enemies.forEach(e => { if (e !== game.activePowerUps.frozenEnemy) e.update(dt); });
     game.greyEnemies.forEach(e => { if (e !== game.activePowerUps.frozenEnemy) e.update(dt); });
     game.bitingEnemies.forEach(e => { if (e !== game.activePowerUps.frozenEnemy) e.update(dt); });
+    game.eatingEnemies.forEach(e => { if (e !== game.activePowerUps.frozenEnemy) e.update(dt); });
     
     if (game.activePowerUps && game.activePowerUps.playerX2 > 0) {
       playerMesh.scale.set(2, 2, 2);
@@ -689,6 +692,9 @@ restartBtn.addEventListener('click', () => {
   
   bitingEnemyMeshes.forEach(m => scene.remove(m));
   bitingEnemyMeshes.length = 0;
+  
+  eatingEnemyMeshes.forEach(m => scene.remove(m));
+  eatingEnemyMeshes.length = 0;
   
   spawnLevelEntities();
 });
