@@ -44,7 +44,6 @@ export class Game {
       enemySlow: 0,
       playerSpeed: 0,
       playerX2: 0,
-      playerHelmet: 0,
       playerFreeze: 0,
       frozenEnemy: null,
       heartPopup: 0
@@ -166,8 +165,7 @@ export class Game {
       enemySlow: 0,
       playerSpeed: 0,
       playerX2: 0,
-      playerHelmet: 0,
-      playerGlue: 0,
+      playerFreeze: 0,
       heartPopup: 0
     };
     this.powerUps = [];
@@ -215,9 +213,7 @@ export class Game {
     if (this.activePowerUps.playerX2 > 0) {
       this.activePowerUps.playerX2 = Math.max(0, this.activePowerUps.playerX2 - dt);
     }
-    if (this.activePowerUps.playerHelmet > 0) {
-      this.activePowerUps.playerHelmet = Math.max(0, this.activePowerUps.playerHelmet - dt);
-    }
+
     if (this.activePowerUps.playerFreeze > 0) {
       this.activePowerUps.playerFreeze = Math.max(0, this.activePowerUps.playerFreeze - dt);
       if (this.activePowerUps.playerFreeze === 0) {
@@ -263,7 +259,7 @@ export class Game {
 
     if (emptyCells.length > 0) {
       let cell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-      let types = ['S', 'A', 'Heart', 'x2', 'Helmet', 'Freeze'];
+      let types = ['S', 'A', 'Heart', 'x2', 'Freeze'];
       let type = types[Math.floor(Math.random() * types.length)];
       this.powerUps.push({
         x: cell.x,
@@ -295,8 +291,6 @@ export class Game {
       this.activePowerUps.playerSpeed = 40;
     } else if (p.type === 'x2') {
       this.activePowerUps.playerX2 = 40;
-    } else if (p.type === 'Helmet') {
-      this.activePowerUps.playerHelmet = 40;
     } else if (p.type === 'Freeze') {
         this.activePowerUps.playerFreeze = 40; // 40 seconds
         let allEnemies = [...this.enemies, ...this.greyEnemies, ...this.bitingEnemies];

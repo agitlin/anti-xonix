@@ -108,7 +108,6 @@ function getHexColorString(type) {
     case 'A': return '#39ff14';
     case 'Heart': return '#ff073a';
     case 'x2': return '#ffeb3b';
-    case 'Helmet': return '#00ffff';
     case 'Freeze': return '#88ccff';
   }
   return '#ffffff';
@@ -120,7 +119,6 @@ function getColorForType(type) {
     case 'A': return 0x39ff14;
     case 'Heart': return 0xff073a;
     case 'x2': return 0xffeb3b;
-    case 'Helmet': return 0x00ffff;
     case 'Freeze': return 0x88ccff;
   }
   return 0xffffff;
@@ -238,7 +236,6 @@ function updatePowerUpsHUD() {
   if (game.activePowerUps.enemySlow > 0) activeTypes.push('slow');
   if (game.activePowerUps.playerSpeed > 0) activeTypes.push('speed');
   if (game.activePowerUps.playerX2 > 0) activeTypes.push('size');
-  if (game.activePowerUps.playerHelmet > 0) activeTypes.push('helmet');
   if (game.activePowerUps.playerFreeze > 0) activeTypes.push('freeze');
   
   let stateStr = activeTypes.join(',');
@@ -298,20 +295,7 @@ function updatePowerUpsHUD() {
         </div>
       `;
     }
-    if (activeTypes.includes('helmet')) {
-      html += `
-        <div class="powerup-item">
-          <div class="powerup-info helmet">
-            <span>HELMET</span>
-            <span id="hud-helmet-time"></span>
-          </div>
-          <div class="powerup-bar-bg">
-            <div class="powerup-bar-fill helmet" id="hud-helmet-bar"></div>
-          </div>
-          <div class="powerup-visual visual-helmet">H</div>
-        </div>
-      `;
-    }
+
     if (activeTypes.includes('freeze')) {
       html += `
         <div class="powerup-item">
@@ -344,11 +328,7 @@ function updatePowerUpsHUD() {
     document.getElementById('hud-size-time').innerText = Math.ceil(game.activePowerUps.playerX2) + 's';
     document.getElementById('hud-size-bar').style.width = pct + '%';
   }
-  if (activeTypes.includes('helmet')) {
-    let pct = (game.activePowerUps.playerHelmet / 40) * 100;
-    document.getElementById('hud-helmet-time').innerText = Math.ceil(game.activePowerUps.playerHelmet) + 's';
-    document.getElementById('hud-helmet-bar').style.width = pct + '%';
-  }
+
   if (activeTypes.includes('freeze')) {
     let pct = (game.activePowerUps.playerFreeze / 40) * 100;
     document.getElementById('hud-freeze-time').innerText = Math.ceil(game.activePowerUps.playerFreeze) + 's';
@@ -398,18 +378,25 @@ function spawnLevelEntities() {
   // Populate Intro Overlay
   document.getElementById('intro-level').innerText = 'LEVEL ' + game.level;
   let detailsHtml = `
-    <ul style="list-style:none; padding:0; margin:0;">
-      <li style="margin-bottom:10px;"><span style="color:#ff0000;">■</span> Red Enemies: ${game.enemies.length}</li>
-      <li style="margin-bottom:10px;"><span style="color:#cccccc;">■</span> Grey Enemies: ${game.greyEnemies.length}</li>
+    <ul style="list-style:none; padding:0; margin:0; font-size: 16px; line-height: 1.6;">
+      <li style="margin-bottom:8px;"><span style="color:#ff0000; font-size:20px;">■</span> <b>Red Enemies (${game.enemies.length}):</b> Standard bouncing hazards.</li>
+      <li style="margin-bottom:8px;"><span style="color:#cccccc; font-size:20px;">■</span> <b>Grey Enemies (${game.greyEnemies.length}):</b> Move horizontally.</li>
   `;
   if (game.bitingEnemies.length > 0) {
-    detailsHtml += `<li style="margin-bottom:10px;"><span style="color:#ff9800;">■</span> Biting Enemies (Orange): ${game.bitingEnemies.length}</li>`;
+    detailsHtml += `<li style="margin-bottom:8px;"><span style="color:#ff9800; font-size:20px;">■</span> <b>Orange Biters (${game.bitingEnemies.length}):</b> Move diagonally and bounce against captured territory.</li>`;
   }
   if (game.eatingEnemies && game.eatingEnemies.length > 0) {
-    detailsHtml += `<li style="margin-bottom:10px;"><span style="color:#9c27b0;">■</span> Eating Enemies (Purple): ${game.eatingEnemies.length}</li>`;
+    detailsHtml += `<li style="margin-bottom:8px;"><span style="color:#9c27b0; font-size:20px;">■</span> <b>Purple Eaters (${game.eatingEnemies.length}):</b> Slow-moving, but they consume your captured territory!</li>`;
   }
   detailsHtml += `
-    <li style="margin-top:20px; color:#aaa;">Powerups: Slow(S), Speed(A), x2, Helmet, Freeze(F), Extra Life(♥)</li>
+    <li style="margin-top:15px; color:#aaa;">
+      <b>Powerups:</b><br/>
+      <span style="color:#00e5ff">S</span> - Slow Enemies | 
+      <span style="color:#39ff14">A</span> - Fast Player | 
+      <span style="color:#ffeb3b">x2</span> - Double Size | 
+      <span style="color:#88ccff">F</span> - Freeze Enemy | 
+      <span style="color:#ff073a">♥</span> - Extra Life
+    </li>
     </ul>
   `;
   document.getElementById('intro-details').innerHTML = detailsHtml;
@@ -432,11 +419,7 @@ const playerMat = new THREE.MeshLambertMaterial({ color: 0x2196F3 });
 const playerMesh = new THREE.Mesh(playerGeo, playerMat);
 scene.add(playerMesh);
 
-const helmetGeo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
-const helmetMat = new THREE.MeshLambertMaterial({ color: 0x00ffff, transparent: true, opacity: 0.6 });
-const helmetMesh = new THREE.Mesh(helmetGeo, helmetMat);
-helmetMesh.visible = false;
-scene.add(helmetMesh);
+
 
 const enemyGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
 const enemyMat = new THREE.MeshLambertMaterial({ color: 0xff0000 });
@@ -579,16 +562,7 @@ function animate() {
       playerMesh.position.set(game.player.x, 0.5, game.player.y);
     }
     
-    // Add visual helmet effect
-    if (game.activePowerUps && game.activePowerUps.playerHelmet > 0) {
-      let t = performance.now() / 150;
-      let s = (game.activePowerUps.playerX2 > 0 ? 2 : 1) * (1.1 + Math.sin(t) * 0.1);
-      helmetMesh.scale.set(s, s, s);
-      helmetMesh.position.copy(playerMesh.position);
-      helmetMesh.visible = true;
-    } else {
-      helmetMesh.visible = false;
-    }
+
     
     syncPowerUpMeshes();
     updatePowerUpsHUD();

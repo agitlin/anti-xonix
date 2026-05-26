@@ -16,18 +16,8 @@ function checkDirectPlayerCollision(enemy, game, dt) {
   let dy = enemy.y - closestY;
 
   if (Math.sqrt(dx*dx + dy*dy) < 0.4) {
-    if (game.activePowerUps && game.activePowerUps.playerHelmet > 0) {
-      // Bounce off player
-      enemy.vx *= -1;
-      enemy.vy *= -1;
-      // Apply bounce immediately to separate
-      enemy.x += enemy.vx * dt;
-      enemy.y += enemy.vy * dt;
-      return true; // Handled as bounce
-    } else {
-      game.loseLife(enemy.x, enemy.y);
-      return true; // Handled as death
-    }
+    game.loseLife(enemy.x, enemy.y);
+    return true; // Handled as death
   }
   return false;
 }

@@ -260,19 +260,6 @@ canvas {
   box-shadow: 0 0 15px #ffeb3b, inset 0 0 15px rgba(255, 235, 59, 0.5);
 }
 
-.visual-helmet {
-  color: #00ffff;
-  border-color: #607d8b;
-  text-shadow: 4px 4px 0 #607d8b;
-  box-shadow: 0 0 15px #00ffff, inset 0 0 15px rgba(0, 255, 255, 0.5);
-}
-
-.powerup-bar-fill.helmet {
-  background: linear-gradient(90deg, #607d8b, #00ffff);
-  box-shadow: 0 0 8px #00ffff;
-}
-
-.powerup-info.helmet { color: #00ffff; }
 
 .visual-freeze {
   color: #88ccff;
