@@ -3,6 +3,14 @@ import { Game, GRID_SIZE, CELL_EMPTY, CELL_FILLED, CELL_TRAIL } from './Game.js'
 import { Player } from './Player.js';
 import { Enemy, GreyEnemy, BitingEnemy, EatingEnemy } from './Enemy.js';
 
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || ('ontouchstart' in window && window.innerWidth < 800);
+
+if (isMobile) {
+  document.getElementById('mobile-reject-overlay').style.display = 'flex';
+  document.getElementById('ui').style.display = 'none';
+  throw new Error("Mobile devices are not supported. Please use a personal computer.");
+}
+
 const uiScore = document.getElementById('score');
 const uiLives = document.getElementById('lives');
 const uiProgress = document.getElementById('progress');
@@ -512,49 +520,6 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-let touchStartX = 0;
-let touchStartY = 0;
-
-window.addEventListener('touchstart', (e) => {
-  touchStartX = e.changedTouches[0].screenX;
-  touchStartY = e.changedTouches[0].screenY;
-}, { passive: false });
-
-window.addEventListener('touchmove', (e) => {
-  // Prevent default scrolling on mobile
-  if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
-    e.preventDefault();
-  }
-}, { passive: false });
-
-window.addEventListener('touchend', (e) => {
-  let touchEndX = e.changedTouches[0].screenX;
-  let touchEndY = e.changedTouches[0].screenY;
-  
-  let dx = touchEndX - touchStartX;
-  let dy = touchEndY - touchStartY;
-  
-  let absDx = Math.abs(dx);
-  let absDy = Math.abs(dy);
-  
-  if (absDx < 30 && absDy < 30) {
-    // Tap detected (acts as spacebar)
-    // Only trigger action if we're not tapping on UI elements like buttons or inputs
-    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
-      handleAction();
-    }
-  } else {
-    // Swipe detected
-    if (!game.player) return;
-    if (absDx > absDy) {
-      if (dx > 0) game.player.nextDirection = { x: 1, y: 0 };
-      else game.player.nextDirection = { x: -1, y: 0 };
-    } else {
-      if (dy > 0) game.player.nextDirection = { x: 0, y: 1 };
-      else game.player.nextDirection = { x: 0, y: -1 };
-    }
-  }
-});
 
 let lastTime = performance.now();
 let gameOverHandled = false;
