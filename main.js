@@ -482,27 +482,75 @@ function updateInstancedMesh(flash = false) {
   if(instancedMesh.instanceColor) instancedMesh.instanceColor.needsUpdate = true;
 }
 
+function handleAction() {
+  if (game.inIntro) {
+    game.inIntro = false;
+    document.getElementById('intro-overlay').style.display = 'none';
+    lastTime = performance.now();
+  } else if (game.inCollisionPause) {
+    game.resumeFromCollision();
+    uiCollisionOverlay.style.display = 'none';
+    scene.remove(impactMesh);
+    scene.background = new THREE.Color(0x222222);
+    updateInstancedMesh(false); // Restore normal colors
+  } else if (!game.gameOver && !game.gameWon) {
+    game.isPaused = !game.isPaused;
+    let pauseOverlay = document.getElementById('pause-overlay');
+    if (game.isPaused) {
+      pauseOverlay.style.display = 'flex';
+    } else {
+      pauseOverlay.style.display = 'none';
+      lastTime = performance.now(); // Prevent large dt jump on resume
+    }
+  }
+}
+
 window.addEventListener('keydown', (e) => {
   if (e.code === 'Space') {
-    if (game.inIntro) {
-      game.inIntro = false;
-      document.getElementById('intro-overlay').style.display = 'none';
-      lastTime = performance.now();
-    } else if (game.inCollisionPause) {
-      game.resumeFromCollision();
-      uiCollisionOverlay.style.display = 'none';
-      scene.remove(impactMesh);
-      scene.background = new THREE.Color(0x222222);
-      updateInstancedMesh(false); // Restore normal colors
-    } else if (!game.gameOver && !game.gameWon) {
-      game.isPaused = !game.isPaused;
-      let pauseOverlay = document.getElementById('pause-overlay');
-      if (game.isPaused) {
-        pauseOverlay.style.display = 'flex';
-      } else {
-        pauseOverlay.style.display = 'none';
-        lastTime = performance.now(); // Prevent large dt jump on resume
-      }
+    handleAction();
+  }
+});
+
+let touchStartX = 0;
+let touchStartY = 0;
+
+window.addEventListener('touchstart', (e) => {
+  touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
+}, { passive: false });
+
+window.addEventListener('touchmove', (e) => {
+  // Prevent default scrolling on mobile
+  if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+window.addEventListener('touchend', (e) => {
+  let touchEndX = e.changedTouches[0].screenX;
+  let touchEndY = e.changedTouches[0].screenY;
+  
+  let dx = touchEndX - touchStartX;
+  let dy = touchEndY - touchStartY;
+  
+  let absDx = Math.abs(dx);
+  let absDy = Math.abs(dy);
+  
+  if (absDx < 30 && absDy < 30) {
+    // Tap detected (acts as spacebar)
+    // Only trigger action if we're not tapping on UI elements like buttons or inputs
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+      handleAction();
+    }
+  } else {
+    // Swipe detected
+    if (!game.player) return;
+    if (absDx > absDy) {
+      if (dx > 0) game.player.nextDirection = { x: 1, y: 0 };
+      else game.player.nextDirection = { x: -1, y: 0 };
+    } else {
+      if (dy > 0) game.player.nextDirection = { x: 0, y: 1 };
+      else game.player.nextDirection = { x: 0, y: -1 };
     }
   }
 });
