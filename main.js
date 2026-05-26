@@ -408,6 +408,7 @@ spawnLevelEntities();
 const geometry = new THREE.BoxGeometry(0.95, 0.5, 0.95);
 const material = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
 const instancedMesh = new THREE.InstancedMesh(geometry, material, GRID_SIZE * GRID_SIZE);
+instancedMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(GRID_SIZE * GRID_SIZE * 3), 3);
 scene.add(instancedMesh);
 
 const colorEmpty = new THREE.Color(0x333333);
