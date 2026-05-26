@@ -467,8 +467,9 @@ function updateInstancedMesh(flash = false) {
         dummyColor.copy(colorTrail);
       }
       
-      if (flash && Math.random() > 0.5) {
-        dummyColor.setHex(Math.random() * 0xffffff);
+      if (flash) {
+        // Toned down flash: blend slightly with red
+        dummyColor.lerp(new THREE.Color(0xff8888), 0.2 + Math.random() * 0.1);
       }
       
       dummy.updateMatrix();
@@ -535,14 +536,14 @@ function animate() {
        wasInCollision = true;
     }
     
-    // Armageddon flashing
-    scene.background = new THREE.Color(Math.random() * 0xffffff);
+    // Toned down flashing
+    scene.background = new THREE.Color(Math.random() > 0.5 ? 0x220000 : 0x000000);
     updateInstancedMesh(true);
     
     // Pulse impact marker
-    let s = 1 + Math.sin(now / 50) * 0.3;
+    let s = 1 + Math.sin(now / 100) * 0.2;
     impactMesh.scale.set(s, s, s);
-    impactMat.color.setHex(Math.random() > 0.5 ? 0xffffff : 0xff00ff);
+    impactMat.color.setHex(0xff00ff);
     
   } else if (!game.gameOver && !game.gameWon) {
     wasInCollision = false;
