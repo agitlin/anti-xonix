@@ -1,5 +1,4 @@
-import * as THREE from 'three';
-import { Game, GRID_SIZE, CELL_EMPTY, CELL_FILLED, CELL_TRAIL } from './Game.js';
+import { Game, CELL_EMPTY, CELL_FILLED, CELL_TRAIL } from './Game.js';
 import { Player } from './Player.js';
 import { Enemy, GreyEnemy, BitingEnemy, EatingEnemy } from './Enemy.js';
 
@@ -17,8 +16,41 @@ const uiProgress = document.getElementById('progress');
 const uiLevel = document.getElementById('level');
 const uiGameOver = document.getElementById('game-over');
 const restartBtn = document.getElementById('restart-btn');
-const uiCollisionOverlay = document.getElementById('collision-overlay');
+const uiStatsOverlay = document.getElementById('stats-overlay');
 const uiCollisionMsg = document.getElementById('collision-msg');
+
+function populateStatsOverlay() {
+  const statsBody = document.getElementById('stats-body');
+  if (!statsBody) return;
+  
+  let html = `<ul style="list-style:none; padding:0; margin:0; font-size: 18px; line-height: 1.8;">`;
+  html += `<li><span style="color:#4CAF50">■</span> <b>Area Captured:</b> ${game.roundStats.areaCaptured} cells</li>`;
+  
+  let pTypes = Object.keys(game.roundStats.powerups);
+  if (pTypes.length > 0) {
+    let parts = pTypes.map(t => `${t} (${game.roundStats.powerups[t]})`);
+    html += `<li><span style="color:#ffeb3b">★</span> <b>Powerups Collected:</b> ${parts.join(', ')}</li>`;
+  } else {
+    html += `<li><span style="color:#ffeb3b">★</span> <b>Powerups Collected:</b> None</li>`;
+  }
+  
+  let eTypes = Object.keys(game.roundStats.enemiesEliminated);
+  if (eTypes.length > 0) {
+    const typeImages = {
+      'Red Bozo': '/img/red_bozo.png',
+      'Gray Mater': '/img/gray_mater.png',
+      'Orange Biter': '/img/orange_biter.png',
+      'Purple Eater': '/img/purple_eater.png'
+    };
+    let parts = eTypes.map(t => `<img src="${typeImages[t]}" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:middle;margin-right:8px;">${t} (${game.roundStats.enemiesEliminated[t]})`);
+    html += `<li style="margin-top: 8px;"><b>Enemies Eliminated:</b><div style="margin-top:4px; display:flex; flex-direction:column; gap:8px; padding-left:10px;">${parts.join('')}</div></li>`;
+  } else {
+    html += `<li><b>Enemies Eliminated:</b> None</li>`;
+  }
+  html += `</ul>`;
+  
+  statsBody.innerHTML = html;
+}
 
 const hofOverlay = document.getElementById('hof-overlay');
 const hofInputSection = document.getElementById('hof-input-section');
@@ -95,8 +127,11 @@ scene.background = new THREE.Color(0x222222);
 
 const aspect = window.innerWidth / window.innerHeight;
 const camera = new THREE.PerspectiveCamera(45, aspect, 1, 1000);
-camera.position.set(GRID_SIZE / 2, GRID_SIZE * 1.2, GRID_SIZE / 2 + GRID_SIZE * 0.8);
-camera.lookAt(GRID_SIZE / 2, 0, GRID_SIZE / 2);
+function updateCamera() {
+  let maxDim = Math.max(game.gridWidth, game.gridHeight);
+  camera.position.set(game.gridWidth / 2, maxDim * 1.2, game.gridHeight / 2 + maxDim * 0.8);
+  camera.lookAt(game.gridWidth / 2, 0, game.gridHeight / 2);
+}
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -346,7 +381,25 @@ function updatePowerUpsHUD() {
 
 let game = new Game();
 
+function getLevelColor(level) {
+  const hue = ((level - 1) * 55) % 360; 
+  return `hsl(${hue}, 60%, 45%)`;
+}
+
+function getEmptySpawnPoint(margin = 5) {
+  let ex, ey;
+  let attempts = 0;
+  do {
+    ex = margin + Math.random() * (game.gridWidth - margin * 2);
+    ey = margin + Math.random() * (game.gridHeight - margin * 2);
+    attempts++;
+  } while (game.getCell(Math.floor(ex), Math.floor(ey)) !== CELL_EMPTY && attempts < 100);
+  return {x: ex, y: ey};
+}
+
 function spawnLevelEntities() {
+  updateCamera();
+  initBoardMesh();
   clearAllPowerUpMeshes();
   game.player = new Player(game);
   game.enemies = [];
@@ -355,59 +408,77 @@ function spawnLevelEntities() {
   game.eatingEnemies = [];
   let numEnemies = 2 + game.level;
   for (let i = 0; i < numEnemies; i++) {
-    let ex = 5 + Math.random() * (GRID_SIZE - 10);
-    let ey = 5 + Math.random() * (GRID_SIZE - 10);
-    game.enemies.push(new Enemy(game, ex, ey));
+    let p = getEmptySpawnPoint();
+    game.enemies.push(new Enemy(game, p.x, p.y));
   }
   let numGreyEnemies = 1 + game.level;
   for (let i = 0; i < numGreyEnemies; i++) {
     let fraction = numGreyEnemies > 1 ? i / (numGreyEnemies - 1) : 0.5;
-    let ex = 1.5 + fraction * (GRID_SIZE - 3);
-    let ey = GRID_SIZE - 1.5;
+    let ex = 1.5 + fraction * (game.gridWidth - 3);
+    let ey = game.gridHeight - 1.5;
     game.greyEnemies.push(new GreyEnemy(game, ex, ey));
   }
   
   if (game.level > 3) {
     let numBiting = game.level - 3;
     for (let i = 0; i < numBiting; i++) {
-      let ex = 5 + Math.random() * (GRID_SIZE - 10);
-      let ey = 5 + Math.random() * (GRID_SIZE - 10);
-      game.bitingEnemies.push(new BitingEnemy(game, ex, ey));
+      let p = getEmptySpawnPoint();
+      game.bitingEnemies.push(new BitingEnemy(game, p.x, p.y));
     }
   }
 
   if (game.level > 4) {
     let numEating = game.level - 4;
     for (let i = 0; i < numEating; i++) {
-      let ex = 5 + Math.random() * (GRID_SIZE - 10);
-      let ey = 5 + Math.random() * (GRID_SIZE - 10);
-      game.eatingEnemies.push(new EatingEnemy(game, ex, ey));
+      let p = getEmptySpawnPoint();
+      game.eatingEnemies.push(new EatingEnemy(game, p.x, p.y));
     }
   }
 
-  // Populate Intro Overlay
-  document.getElementById('intro-level').innerText = 'LEVEL ' + game.level;
-  let detailsHtml = `
-    <ul style="list-style:none; padding:0; margin:0; font-size: 16px; line-height: 1.6;">
-      <li style="margin-bottom:8px;"><span style="color:#ff0000; font-size:20px;">■</span> <b>Red Enemies (${game.enemies.length}):</b> Standard bouncing hazards.</li>
-      <li style="margin-bottom:8px;"><span style="color:#cccccc; font-size:20px;">■</span> <b>Grey Enemies (${game.greyEnemies.length}):</b> Move horizontally.</li>
+  // Populate Splash Overlay
+  let levelColor = getLevelColor(game.level);
+  colorFilled.setStyle(levelColor);
+  
+  document.getElementById('splash-background').style.background = `
+    linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, ${levelColor} 50%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.9) 100%),
+    repeating-linear-gradient(90deg, transparent 0, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 42px)
   `;
+
+  document.getElementById('intro-level').innerText = 'LEVEL ' + game.level;
+  
+  let bozoMaterScale = game.level <= 3 ? 1.5 : 1;
+  let biterScale = game.level === 4 ? 1.5 : 1;
+  let eaterScale = game.level === 5 ? 1.5 : 1;
+  
+  let enemiesHtml = `<div style="display:flex; align-items:center; transform: scale(${bozoMaterScale}); transform-origin: right center; transition: transform 0.3s;">
+    <span style="color:#fff; font-family:'Courier New'; margin-right: 15px; font-weight: bold; font-size:18px; text-shadow: 2px 2px 0 #000;">Red Bozo & Gray Mater</span>
+    <img src="/img/red_bozo.png" style="width:48px;height:48px;image-rendering:pixelated; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8)); margin-right: 10px;">
+    <img src="/img/gray_mater.png" style="width:48px;height:48px;image-rendering:pixelated; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8));">
+  </div>`;
+  
   if (game.bitingEnemies.length > 0) {
-    detailsHtml += `<li style="margin-bottom:8px;"><span style="color:#ff9800; font-size:20px;">■</span> <b>Orange Biters (${game.bitingEnemies.length}):</b> Move diagonally and bounce against captured territory.</li>`;
+    enemiesHtml += `<div style="display:flex; align-items:center; margin-top: 15px; transform: scale(${biterScale}); transform-origin: right center;">
+      <span style="color:#fff; font-family:'Courier New'; margin-right: 15px; font-weight: bold; font-size:18px; text-shadow: 2px 2px 0 #000;">Orange Biter</span>
+      <img src="/img/orange_biter.png" style="width:48px;height:48px;image-rendering:pixelated; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8));">
+    </div>`;
   }
+  
   if (game.eatingEnemies && game.eatingEnemies.length > 0) {
-    detailsHtml += `<li style="margin-bottom:8px;"><span style="color:#9c27b0; font-size:20px;">■</span> <b>Purple Eaters (${game.eatingEnemies.length}):</b> Slow-moving, but they consume your captured territory!</li>`;
+    enemiesHtml += `<div style="display:flex; align-items:center; margin-top: 15px; transform: scale(${eaterScale}); transform-origin: right center;">
+      <span style="color:#fff; font-family:'Courier New'; margin-right: 15px; font-weight: bold; font-size:18px; text-shadow: 2px 2px 0 #000;">Purple Eater</span>
+      <img src="/img/purple_eater.png" style="width:48px;height:48px;image-rendering:pixelated; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8));">
+    </div>`;
   }
-  detailsHtml += `
-    <li style="margin-top:15px; color:#aaa;">
-      <b>Powerups:</b><br/>
-      <span style="color:#00e5ff">S</span> - Slow Enemies | 
-      <span style="color:#39ff14">A</span> - Fast Player | 
-      <span style="color:#ffeb3b">x2</span> - Double Size | 
-      <span style="color:#88ccff">F</span> - Freeze Enemy | 
-      <span style="color:#ff073a">♥</span> - Extra Life
-    </li>
-    </ul>
+  
+  document.getElementById('splash-enemies').innerHTML = enemiesHtml;
+
+  let detailsHtml = `
+      <b>Powerups:</b> 
+      <span style="color:#00e5ff; margin-left:10px;">S</span> Slow | 
+      <span style="color:#39ff14">A</span> Speed | 
+      <span style="color:#ffeb3b">x2</span> Size | 
+      <span style="color:#88ccff">F</span> Freeze | 
+      <span style="color:#ff073a">♥</span> Life
   `;
   document.getElementById('intro-details').innerHTML = detailsHtml;
   document.getElementById('intro-overlay').style.display = 'flex';
@@ -417,8 +488,12 @@ spawnLevelEntities();
 
 const geometry = new THREE.BoxGeometry(0.95, 0.5, 0.95);
 const material = new THREE.MeshLambertMaterial({ color: 0xffffff });
-const instancedMesh = new THREE.InstancedMesh(geometry, material, GRID_SIZE * GRID_SIZE);
-scene.add(instancedMesh);
+let instancedMesh;
+function initBoardMesh() {
+  if (instancedMesh) scene.remove(instancedMesh);
+  instancedMesh = new THREE.InstancedMesh(geometry, material, game.gridWidth * game.gridHeight);
+  scene.add(instancedMesh);
+}
 
 const colorEmpty = new THREE.Color(0x333333);
 const colorFilled = new THREE.Color(0x4CAF50);
@@ -459,9 +534,10 @@ impactMesh.add(impactLight);
 let wasInCollision = false;
 
 function updateInstancedMesh(flash = false) {
+  if (!instancedMesh) return;
   let idx = 0;
-  for (let y = 0; y < GRID_SIZE; y++) {
-    for (let x = 0; x < GRID_SIZE; x++) {
+  for (let y = 0; y < game.gridHeight; y++) {
+    for (let x = 0; x < game.gridWidth; x++) {
       let cell = game.getCell(x, y);
       
       dummy.position.set(x + 0.5, 0, y + 0.5);
@@ -499,7 +575,7 @@ function handleAction() {
     lastTime = performance.now();
   } else if (game.inCollisionPause) {
     game.resumeFromCollision();
-    uiCollisionOverlay.style.display = 'none';
+    uiStatsOverlay.style.display = 'none';
     scene.remove(impactMesh);
     scene.background = new THREE.Color(0x222222);
     updateInstancedMesh(false); // Restore normal colors
@@ -542,8 +618,9 @@ function animate() {
   if (game.inCollisionPause) {
     // Just entered collision?
     if (!wasInCollision) {
-       uiCollisionOverlay.style.display = 'block';
+       uiStatsOverlay.style.display = 'flex';
        uiCollisionMsg.innerText = retroMessages[Math.floor(Math.random() * retroMessages.length)];
+       populateStatsOverlay();
        if (game.impactPoint) {
          impactMesh.position.set(game.impactPoint.x, 0.5, game.impactPoint.y);
          scene.add(impactMesh);
@@ -564,6 +641,30 @@ function animate() {
     wasInCollision = false;
     gameOverHandled = false;
     
+    let frozen = game.activePowerUps.frozenEnemy;
+    if (frozen) {
+      let isPlayerX2 = game.activePowerUps.playerX2 > 0;
+      let minX = game.player.x - 0.4;
+      let maxX = game.player.x + (isPlayerX2 ? 1.4 : 0.4);
+      let minY = game.player.y - 0.4;
+      let maxY = game.player.y + (isPlayerX2 ? 1.4 : 0.4);
+      let closestX = Math.max(minX, Math.min(frozen.x, maxX));
+      let closestY = Math.max(minY, Math.min(frozen.y, maxY));
+      let dx = frozen.x - closestX;
+      let dy = frozen.y - closestY;
+      if (Math.sqrt(dx*dx + dy*dy) < 0.4) {
+        // eliminate
+        game.enemies = game.enemies.filter(e => e !== frozen);
+        game.greyEnemies = game.greyEnemies.filter(e => e !== frozen);
+        game.bitingEnemies = game.bitingEnemies.filter(e => e !== frozen);
+        game.eatingEnemies = game.eatingEnemies.filter(e => e !== frozen);
+        game.roundStats.enemiesEliminated[frozen.type] = (game.roundStats.enemiesEliminated[frozen.type] || 0) + 1;
+        game.score += 100;
+        game.activePowerUps.frozenEnemy = null;
+        game.activePowerUps.playerFreeze = 0;
+      }
+    }
+
     game.updatePowerUps(dt);
     game.player.update(dt);
     game.enemies.forEach(e => { if (e !== game.activePowerUps.frozenEnemy) e.update(dt); });

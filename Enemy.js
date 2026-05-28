@@ -1,4 +1,4 @@
-import { CELL_EMPTY, CELL_FILLED, CELL_TRAIL, GRID_SIZE } from './Game.js';
+import { CELL_EMPTY, CELL_FILLED, CELL_TRAIL } from './Game.js';
 
 function checkDirectPlayerCollision(enemy, game, dt) {
   if (!game.player || game.gameOver || game.inCollisionPause) return false;
@@ -25,6 +25,7 @@ function checkDirectPlayerCollision(enemy, game, dt) {
 export class Enemy {
   constructor(game, x, y) {
     this.game = game;
+    this.type = 'Red Bozo';
     this.x = x;
     this.y = y;
     this.speed = 6;
@@ -99,6 +100,7 @@ export class Enemy {
 export class GreyEnemy {
   constructor(game, x, y) {
     this.game = game;
+    this.type = 'Gray Mater';
     this.x = x;
     this.y = y;
     this.speed = 5; // slightly slower or same speed
@@ -128,14 +130,14 @@ export class GreyEnemy {
 
     // Bounce on non-FILLED cells or grid boundaries
     let leftCell = left < 0 ? CELL_EMPTY : this.game.getCell(left, Math.floor(this.y));
-    let rightCell = right >= GRID_SIZE ? CELL_EMPTY : this.game.getCell(right, Math.floor(this.y));
+    let rightCell = right >= this.game.gridWidth ? CELL_EMPTY : this.game.getCell(right, Math.floor(this.y));
     
     if (leftCell !== CELL_FILLED || rightCell !== CELL_FILLED) {
       bounceX = true;
     }
 
     let topCell = top < 0 ? CELL_EMPTY : this.game.getCell(Math.floor(this.x), top);
-    let bottomCell = bottom >= GRID_SIZE ? CELL_EMPTY : this.game.getCell(Math.floor(this.x), bottom);
+    let bottomCell = bottom >= this.game.gridHeight ? CELL_EMPTY : this.game.getCell(Math.floor(this.x), bottom);
     
     if (topCell !== CELL_FILLED || bottomCell !== CELL_FILLED) {
       bounceY = true;
@@ -147,7 +149,7 @@ export class GreyEnemy {
     if (!bounceX && !bounceY) {
         let diagX = Math.floor(nextX + Math.sign(this.vx)*r);
         let diagY = Math.floor(nextY + Math.sign(this.vy)*r);
-        let diagCell = (diagX < 0 || diagX >= GRID_SIZE || diagY < 0 || diagY >= GRID_SIZE)
+        let diagCell = (diagX < 0 || diagX >= this.game.gridWidth || diagY < 0 || diagY >= this.game.gridHeight)
             ? CELL_EMPTY 
             : this.game.getCell(diagX, diagY);
         
@@ -165,6 +167,7 @@ export class GreyEnemy {
 export class BitingEnemy {
   constructor(game, x, y) {
     this.game = game;
+    this.type = 'Orange Biter';
     this.x = x;
     this.y = y;
     this.speed = 6;
@@ -243,8 +246,8 @@ export class BitingEnemy {
 
   _biteCell(x, y) {
     const BORDER_THICKNESS = 2; // from Game.js
-    if (x < BORDER_THICKNESS || x >= GRID_SIZE - BORDER_THICKNESS ||
-        y < BORDER_THICKNESS || y >= GRID_SIZE - BORDER_THICKNESS) {
+    if (x < BORDER_THICKNESS || x >= this.game.gridWidth - BORDER_THICKNESS ||
+        y < BORDER_THICKNESS || y >= this.game.gridHeight - BORDER_THICKNESS) {
       // It's the permanent border, do not eat
       return;
     }
@@ -256,6 +259,7 @@ export class BitingEnemy {
 export class EatingEnemy {
   constructor(game, x, y) {
     this.game = game;
+    this.type = 'Purple Eater';
     this.x = x;
     this.y = y;
     this.speed = 3; // Half of normal enemy speed (6)
@@ -287,10 +291,10 @@ export class EatingEnemy {
     const BORDER_THICKNESS = 2; // from Game.js
 
     // Bounce off permanent borders
-    if (left < BORDER_THICKNESS || right >= GRID_SIZE - BORDER_THICKNESS) {
+    if (left < BORDER_THICKNESS || right >= this.game.gridWidth - BORDER_THICKNESS) {
       bounceX = true;
     }
-    if (top < BORDER_THICKNESS || bottom >= GRID_SIZE - BORDER_THICKNESS) {
+    if (top < BORDER_THICKNESS || bottom >= this.game.gridHeight - BORDER_THICKNESS) {
       bounceY = true;
     }
 
@@ -315,8 +319,8 @@ export class EatingEnemy {
     let cx = Math.floor(this.x);
     let cy = Math.floor(this.y);
     if (this.game.getCell(cx, cy) === CELL_FILLED &&
-        cx >= BORDER_THICKNESS && cx < GRID_SIZE - BORDER_THICKNESS &&
-        cy >= BORDER_THICKNESS && cy < GRID_SIZE - BORDER_THICKNESS) {
+        cx >= BORDER_THICKNESS && cx < this.game.gridWidth - BORDER_THICKNESS &&
+        cy >= BORDER_THICKNESS && cy < this.game.gridHeight - BORDER_THICKNESS) {
       this.game.setCell(cx, cy, CELL_EMPTY);
     }
   }

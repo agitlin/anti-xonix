@@ -1,4 +1,3 @@
-export const GRID_SIZE = 40;
 export const BORDER_THICKNESS = 2;
 
 export const CELL_EMPTY = 0;
@@ -17,16 +16,28 @@ export class Game {
     this.level = 1;
     this.score = 0;
     this.lives = 3;
+    this.resetRoundStats();
     this.resetLevel();
   }
 
   nextLevel() {
     this.level++;
     this.lives++;
+    this.resetRoundStats();
     this.resetLevel();
   }
 
+  resetRoundStats() {
+    this.roundStats = {
+      powerups: {},
+      areaCaptured: 0,
+      enemiesEliminated: {}
+    };
+  }
+
   resetLevel() {
+    this.gridWidth = 40 + (this.level - 1) * 4;
+    this.gridHeight = 40 + (this.level % 2 === 0 ? 8 : 2);
     this.grid = [];
     this.enemies = [];
     this.greyEnemies = [];
@@ -50,11 +61,11 @@ export class Game {
     };
     
     // Initialize grid
-    for (let y = 0; y < GRID_SIZE; y++) {
+    for (let y = 0; y < this.gridHeight; y++) {
       let row = [];
-      for (let x = 0; x < GRID_SIZE; x++) {
-        if (x < BORDER_THICKNESS || x >= GRID_SIZE - BORDER_THICKNESS ||
-            y < BORDER_THICKNESS || y >= GRID_SIZE - BORDER_THICKNESS) {
+      for (let x = 0; x < this.gridWidth; x++) {
+        if (x < BORDER_THICKNESS || x >= this.gridWidth - BORDER_THICKNESS ||
+            y < BORDER_THICKNESS || y >= this.gridHeight - BORDER_THICKNESS) {
           row.push(CELL_FILLED);
         } else {
           row.push(CELL_EMPTY);
@@ -62,44 +73,91 @@ export class Game {
       }
       this.grid.push(row);
     }
+
+    if (this.level >= 2) {
+      this.generateCenterShape();
+    }
+  }
+
+  generateCenterShape() {
+    const shapes = [
+      [
+        "  XX  XX  ",
+        " XXXXXXXX ",
+        "XXXXXXXXXX",
+        " XXXXXXXX ",
+        "  XXXXXX  ",
+        "   XXXX   ",
+        "    XX    "
+      ],
+      [
+        "X    X XXX",
+        "X    X  X ",
+        "XXXXXX  X ",
+        "X    X  X ",
+        "X    X XXX"
+      ],
+      [
+        "  XXXXXX  ",
+        " XX    XX ",
+        "X X    X X",
+        "X        X",
+        "X X    X X",
+        " XX    XX ",
+        "  XXXXXX  "
+      ]
+    ];
+    let shape = shapes[Math.floor(Math.random() * shapes.length)];
+    let shapeWidth = shape[0].length;
+    let shapeHeight = shape.length;
+    let startX = Math.floor((this.gridWidth - shapeWidth) / 2);
+    let startY = Math.floor((this.gridHeight - shapeHeight) / 2);
+    for (let y = 0; y < shapeHeight; y++) {
+      for (let x = 0; x < shapeWidth; x++) {
+        if (shape[y][x] !== ' ') {
+          this.setCell(startX + x, startY + y, CELL_FILLED);
+        }
+      }
+    }
   }
 
   getCell(x, y) {
-    if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return CELL_FILLED;
+    if (x < 0 || x >= this.gridWidth || y < 0 || y >= this.gridHeight) return CELL_FILLED;
     return this.grid[y][x];
   }
 
   setCell(x, y, value) {
-    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+    if (x >= 0 && x < this.gridWidth && y >= 0 && y < this.gridHeight) {
       this.grid[y][x] = value;
     }
   }
 
   captureArea() {
     // 1. Convert all TRAIL to FILLED
-    for (let y = 0; y < GRID_SIZE; y++) {
-      for (let x = 0; x < GRID_SIZE; x++) {
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
         if (this.grid[y][x] === CELL_TRAIL) {
           this.grid[y][x] = CELL_FILLED;
           this.score += 10;
+          this.roundStats.areaCaptured++;
         }
       }
     }
 
     // 2. Flood Fill to find empty areas containing enemies
-    let visited = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false));
+    let visited = Array(this.gridHeight).fill().map(() => Array(this.gridWidth).fill(false));
     let enemyCells = new Set();
     
     this.enemies.forEach(e => {
        const ex = Math.floor(e.x + 0.5); // Center of the enemy
        const ey = Math.floor(e.y + 0.5);
-       if(ex >= 0 && ex < GRID_SIZE && ey >=0 && ey < GRID_SIZE) {
+       if(ex >= 0 && ex < this.gridWidth && ey >=0 && ey < this.gridHeight) {
            enemyCells.add(`${ex},${ey}`);
        }
     });
 
-    for (let y = 0; y < GRID_SIZE; y++) {
-      for (let x = 0; x < GRID_SIZE; x++) {
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
         if (this.grid[y][x] === CELL_EMPTY && !visited[y][x]) {
           let region = [];
           let queue = [{x, y}];
@@ -125,7 +183,7 @@ export class Game {
             ];
 
             for (let n of neighbors) {
-              if (n.x >= 0 && n.x < GRID_SIZE && n.y >= 0 && n.y < GRID_SIZE) {
+              if (n.x >= 0 && n.x < this.gridWidth && n.y >= 0 && n.y < this.gridHeight) {
                 if (this.grid[n.y][n.x] === CELL_EMPTY && !visited[n.y][n.x]) {
                   visited[n.y][n.x] = true;
                   queue.push(n);
@@ -138,6 +196,7 @@ export class Game {
             for (let p of region) {
               this.grid[p.y][p.x] = CELL_FILLED;
               this.score += 50; // more score for capturing empty areas
+              this.roundStats.areaCaptured++;
             }
           }
         }
@@ -170,12 +229,14 @@ export class Game {
     };
     this.powerUps = [];
     
+    this.resetRoundStats();
+    
     if (this.lives <= 0) {
       this.gameOver = true;
     } else {
       // clear trail
-      for (let y = 0; y < GRID_SIZE; y++) {
-        for (let x = 0; x < GRID_SIZE; x++) {
+      for (let y = 0; y < this.gridHeight; y++) {
+        for (let x = 0; x < this.gridWidth; x++) {
           if (this.grid[y][x] === CELL_TRAIL) {
             this.grid[y][x] = CELL_EMPTY;
           }
@@ -193,8 +254,8 @@ export class Game {
            
            if (dist < SAFE_DISTANCE) {
              let safeSpots = [];
-             for (let y = 0; y < GRID_SIZE; y++) {
-               for (let x = 0; x < GRID_SIZE; x++) {
+             for (let y = 0; y < this.gridHeight; y++) {
+               for (let x = 0; x < this.gridWidth; x++) {
                  if (this.grid[y][x] === CELL_FILLED) {
                    let sdx = x + 0.5 - this.player.x;
                    let sdy = y + 0.5 - this.player.y;
@@ -217,10 +278,10 @@ export class Game {
   }
 
   calculateProgress() {
-    let totalEmpty = (GRID_SIZE - BORDER_THICKNESS*2) * (GRID_SIZE - BORDER_THICKNESS*2);
+    let totalEmpty = (this.gridWidth - BORDER_THICKNESS*2) * (this.gridHeight - BORDER_THICKNESS*2);
     let filledCount = 0;
-    for(let y=BORDER_THICKNESS; y<GRID_SIZE-BORDER_THICKNESS; y++) {
-      for(let x=BORDER_THICKNESS; x<GRID_SIZE-BORDER_THICKNESS; x++) {
+    for(let y=BORDER_THICKNESS; y<this.gridHeight-BORDER_THICKNESS; y++) {
+      for(let x=BORDER_THICKNESS; x<this.gridWidth-BORDER_THICKNESS; x++) {
         if(this.grid[y][x] === CELL_FILLED) {
           filledCount++;
         }
@@ -274,8 +335,8 @@ export class Game {
   spawnPowerUp() {
     // Gather all empty grid cell coordinates
     let emptyCells = [];
-    for (let y = BORDER_THICKNESS; y < GRID_SIZE - BORDER_THICKNESS; y++) {
-      for (let x = BORDER_THICKNESS; x < GRID_SIZE - BORDER_THICKNESS; x++) {
+    for (let y = BORDER_THICKNESS; y < this.gridHeight - BORDER_THICKNESS; y++) {
+      for (let x = BORDER_THICKNESS; x < this.gridWidth - BORDER_THICKNESS; x++) {
         if (this.grid[y][x] === CELL_EMPTY) {
           // Check if there's already a power-up here
           let occupied = this.powerUps.some(p => p.x === x && p.y === y);
@@ -311,6 +372,8 @@ export class Game {
   }
 
   collectPowerUp(p) {
+    this.roundStats.powerups[p.type] = (this.roundStats.powerups[p.type] || 0) + 1;
+    
     if (p.type === 'Heart') {
       this.lives++;
       this.activePowerUps.heartPopup = 3;

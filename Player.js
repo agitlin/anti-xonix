@@ -1,4 +1,4 @@
-import { GRID_SIZE, CELL_EMPTY, CELL_FILLED, CELL_TRAIL } from './Game.js';
+import { CELL_EMPTY, CELL_FILLED, CELL_TRAIL } from './Game.js';
 
 export class Player {
   constructor(game) {
@@ -23,7 +23,7 @@ export class Player {
   }
 
   resetPosition() {
-    this.x = Math.floor(GRID_SIZE / 2) + 0.5;
+    this.x = Math.floor(this.game.gridWidth / 2) + 0.5;
     this.y = 1.5; // Near top border
     this.direction = { x: 0, y: 0 };
     this.nextDirection = { x: 0, y: 0 };
@@ -47,8 +47,8 @@ export class Player {
     
     for (let dy = 0; dy < size; dy++) {
       for (let dx = 0; dx < size; dx++) {
-        let x = Math.min(GRID_SIZE - 1, gridX + dx);
-        let y = Math.min(GRID_SIZE - 1, gridY + dy);
+        let x = Math.min(this.game.gridWidth - 1, gridX + dx);
+        let y = Math.min(this.game.gridHeight - 1, gridY + dy);
         if (!cells.some(c => c.x === x && c.y === y)) {
           cells.push({ x, y });
         }
@@ -88,8 +88,8 @@ export class Player {
     this.x += this.direction.x * speed * dt;
     this.y += this.direction.y * speed * dt;
 
-    this.x = Math.max(0, Math.min(GRID_SIZE - 0.01, this.x));
-    this.y = Math.max(0, Math.min(GRID_SIZE - 0.01, this.y));
+    this.x = Math.max(0, Math.min(this.game.gridWidth - 0.01, this.x));
+    this.y = Math.max(0, Math.min(this.game.gridHeight - 0.01, this.y));
 
     let gridX = Math.floor(this.x);
     let gridY = Math.floor(this.y);
