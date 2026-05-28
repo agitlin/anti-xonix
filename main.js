@@ -485,7 +485,7 @@ function spawnLevelEntities() {
   document.getElementById('intro-overlay').style.display = 'flex';
 }
 
-spawnLevelEntities();
+
 
 const geometry = new THREE.BoxGeometry(0.95, 0.5, 0.95);
 const material = new THREE.MeshLambertMaterial({ color: 0xffffff });
@@ -768,6 +768,7 @@ function animate() {
   renderer.render(scene, camera);
 }
 
+spawnLevelEntities();
 updateInstancedMesh(false); // Initialize grid colors before first frame
 animate();
 
