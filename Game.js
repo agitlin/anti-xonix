@@ -183,6 +183,35 @@ export class Game {
       }
       if (this.player) {
          this.player.resetPosition();
+
+         // Move grey enemies away from player spawn to prevent instant death
+         const SAFE_DISTANCE = 10;
+         for (let enemy of this.greyEnemies) {
+           let dx = enemy.x - this.player.x;
+           let dy = enemy.y - this.player.y;
+           let dist = Math.sqrt(dx * dx + dy * dy);
+           
+           if (dist < SAFE_DISTANCE) {
+             let safeSpots = [];
+             for (let y = 0; y < GRID_SIZE; y++) {
+               for (let x = 0; x < GRID_SIZE; x++) {
+                 if (this.grid[y][x] === CELL_FILLED) {
+                   let sdx = x + 0.5 - this.player.x;
+                   let sdy = y + 0.5 - this.player.y;
+                   let sdist = Math.sqrt(sdx * sdx + sdy * sdy);
+                   if (sdist >= SAFE_DISTANCE) {
+                     safeSpots.push({ x: x + 0.5, y: y + 0.5 });
+                   }
+                 }
+               }
+             }
+             if (safeSpots.length > 0) {
+               let spot = safeSpots[Math.floor(Math.random() * safeSpots.length)];
+               enemy.x = spot.x;
+               enemy.y = spot.y;
+             }
+           }
+         }
       }
     }
   }
