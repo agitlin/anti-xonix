@@ -38,10 +38,10 @@ function populateStatsOverlay() {
   let eTypes = Object.keys(game.roundStats.enemiesEliminated);
   if (eTypes.length > 0) {
     const typeImages = {
-      'Red Bozo': '/img/red_bozo.png',
-      'Gray Mater': '/img/gray_mater.png',
-      'Orange Biter': '/img/orange_biter.png',
-      'Purple Eater': '/img/purple_eater.png'
+      'Red Bozo': './img/red_bozo.png',
+      'Gray Mater': './img/gray_mater.png',
+      'Orange Biter': './img/orange_biter.png',
+      'Purple Eater': './img/purple_eater.png'
     };
     let parts = eTypes.map(t => `<img src="${typeImages[t]}" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:middle;margin-right:8px;">${t} (${game.roundStats.enemiesEliminated[t]})`);
     html += `<li style="margin-top: 8px;"><b>Enemies Eliminated:</b><div style="margin-top:4px; display:flex; flex-direction:column; gap:8px; padding-left:10px;">${parts.join('')}</div></li>`;
@@ -453,21 +453,21 @@ function spawnLevelEntities() {
   
   let enemiesHtml = `<div style="display:flex; align-items:center; transform: scale(${bozoMaterScale}); transform-origin: right center; transition: transform 0.3s;">
     <span style="color:#fff; font-family:'Courier New'; margin-right: 15px; font-weight: bold; font-size:18px; text-shadow: 2px 2px 0 #000;">Red Bozo & Gray Mater</span>
-    <img src="/img/red_bozo.png" style="width:48px;height:48px;image-rendering:pixelated; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8)); margin-right: 10px;">
-    <img src="/img/gray_mater.png" style="width:48px;height:48px;image-rendering:pixelated; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8));">
+    <img src="./img/red_bozo.png" style="width:48px;height:48px;image-rendering:pixelated; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8)); margin-right: 10px;">
+    <img src="./img/gray_mater.png" style="width:48px;height:48px;image-rendering:pixelated; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8));">
   </div>`;
   
   if (game.bitingEnemies.length > 0) {
     enemiesHtml += `<div style="display:flex; align-items:center; margin-top: 15px; transform: scale(${biterScale}); transform-origin: right center;">
       <span style="color:#fff; font-family:'Courier New'; margin-right: 15px; font-weight: bold; font-size:18px; text-shadow: 2px 2px 0 #000;">Orange Biter</span>
-      <img src="/img/orange_biter.png" style="width:48px;height:48px;image-rendering:pixelated; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8));">
+      <img src="./img/orange_biter.png" style="width:48px;height:48px;image-rendering:pixelated; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8));">
     </div>`;
   }
   
   if (game.eatingEnemies && game.eatingEnemies.length > 0) {
     enemiesHtml += `<div style="display:flex; align-items:center; margin-top: 15px; transform: scale(${eaterScale}); transform-origin: right center;">
       <span style="color:#fff; font-family:'Courier New'; margin-right: 15px; font-weight: bold; font-size:18px; text-shadow: 2px 2px 0 #000;">Purple Eater</span>
-      <img src="/img/purple_eater.png" style="width:48px;height:48px;image-rendering:pixelated; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8));">
+      <img src="./img/purple_eater.png" style="width:48px;height:48px;image-rendering:pixelated; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8));">
     </div>`;
   }
   
