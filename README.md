@@ -2,6 +2,10 @@
 
 A classic arcade-style game built with Three.js and Vite. Guide the Anti-Xonix hero to capture territory while dodging bouncing enemies and capturing powerups!
 
+## 🤖 AI Developer Guidelines
+
+> **CRITICAL RULE FOR AI AGENTS:** This project follows strict Test-Driven Development. Whenever you add a new feature, modify core logic (e.g., `Game.js`, `Enemy.js`, `Player.js`), or fix a bug, you **MUST** write or update the corresponding tests in the `tests/` directory before completing your task. Ensure all tests pass using `make test`.
+
 ## 🚀 Getting Started
 
 This project is built using [Vite](https://vitejs.dev/) as the build tool.
