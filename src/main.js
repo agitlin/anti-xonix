@@ -39,6 +39,7 @@ function populateStatsOverlay() {
   if (!statsBody) return;
   
   let html = `<ul style="list-style:none; padding:0; margin:0; font-size: 18px; line-height: 1.8;">`;
+  html += `<li><span style="color:#ff073a">☠</span> <b>Cause of Death:</b> ${game.deathCause || "Unknown"}</li>`;
   html += `<li><span style="color:#4CAF50">■</span> <b>Area Captured:</b> ${game.roundStats.areaCaptured} cells</li>`;
   
   let pTypes = Object.keys(game.roundStats.powerups);

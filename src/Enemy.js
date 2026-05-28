@@ -16,7 +16,7 @@ function checkDirectPlayerCollision(enemy, game, dt) {
   let dy = enemy.y - closestY;
 
   if (Math.sqrt(dx*dx + dy*dy) < 0.4) {
-    game.loseLife(enemy.x, enemy.y);
+    game.loseLife(enemy.x, enemy.y, "Hit by " + enemy.type);
     return true; // Handled as death
   }
   return false;
@@ -60,7 +60,7 @@ export class Enemy {
     if (leftCell === CELL_FILLED || rightCell === CELL_FILLED) {
       bounceX = true;
     } else if (leftCell === CELL_TRAIL || rightCell === CELL_TRAIL) {
-      this.game.loseLife(this.x, this.y);
+      this.game.loseLife(this.x, this.y, "Trail hit by " + this.type);
       return;
     }
 
@@ -71,7 +71,7 @@ export class Enemy {
     if (topCell === CELL_FILLED || bottomCell === CELL_FILLED) {
       bounceY = true;
     } else if (topCell === CELL_TRAIL || bottomCell === CELL_TRAIL) {
-      this.game.loseLife(this.x, this.y);
+      this.game.loseLife(this.x, this.y, "Trail hit by " + this.type);
       return;
     }
 
@@ -87,7 +87,7 @@ export class Enemy {
              this.vx *= -1;
              this.vy *= -1;
         } else if (diagCell === CELL_TRAIL) {
-             this.game.loseLife(this.x, this.y);
+             this.game.loseLife(this.x, this.y, "Trail hit by " + this.type);
              return;
         }
     }
@@ -205,7 +205,7 @@ export class BitingEnemy {
       if (rightCell === CELL_FILLED) this._biteCell(right, Math.floor(this.y));
       bounceX = true;
     } else if (leftCell === CELL_TRAIL || rightCell === CELL_TRAIL) {
-      this.game.loseLife(this.x, this.y);
+      this.game.loseLife(this.x, this.y, "Trail hit by " + this.type);
       return;
     }
 
@@ -218,7 +218,7 @@ export class BitingEnemy {
       if (bottomCell === CELL_FILLED) this._biteCell(Math.floor(this.x), bottom);
       bounceY = true;
     } else if (topCell === CELL_TRAIL || bottomCell === CELL_TRAIL) {
-      this.game.loseLife(this.x, this.y);
+      this.game.loseLife(this.x, this.y, "Trail hit by " + this.type);
       return;
     }
 
@@ -235,7 +235,7 @@ export class BitingEnemy {
              this.vx *= -1;
              this.vy *= -1;
         } else if (diagCell === CELL_TRAIL) {
-             this.game.loseLife(this.x, this.y);
+             this.game.loseLife(this.x, this.y, "Trail hit by " + this.type);
              return;
         }
     }
@@ -308,7 +308,7 @@ export class EatingEnemy {
     let bottomCell = this.game.getCell(Math.floor(this.x), bottom);
     
     if (leftCell === CELL_TRAIL || rightCell === CELL_TRAIL || topCell === CELL_TRAIL || bottomCell === CELL_TRAIL) {
-      this.game.loseLife(this.x, this.y);
+      this.game.loseLife(this.x, this.y, "Trail hit by " + this.type);
       return;
     }
 

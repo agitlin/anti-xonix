@@ -210,10 +210,11 @@ export class Game {
     }
   }
 
-  loseLife(x = 0, y = 0) {
+  loseLife(x = 0, y = 0, cause = "Unknown") {
     if (this.inCollisionPause) return; // Prevent multiple collisions triggering at once
     this.inCollisionPause = true;
     this.impactPoint = { x, y };
+    this.deathCause = cause;
   }
 
   resumeFromCollision() {

@@ -131,7 +131,7 @@ export class Player {
           let inRecent = this.recentTrailCells.some(c => c.x === cell.x && c.y === cell.y);
           if (!inRecent) {
             if (gridX !== prevGridX || gridY !== prevGridY) {
-              this.game.loseLife(this.x, this.y);
+              this.game.loseLife(this.x, this.y, "Hit own trail");
               return;
             }
           }
