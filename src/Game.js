@@ -10,6 +10,7 @@ export class Game {
     this.score = 0;
     this.lives = 3;
     this.onGameUpdate = null;
+    this.resetRoundStats();
     this.resetLevel();
   }
 
