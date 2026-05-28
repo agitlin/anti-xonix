@@ -9,6 +9,7 @@ export class Game {
     this.level = 1;
     this.score = 0;
     this.lives = 3;
+    this.onGameUpdate = null;
     this.resetLevel();
   }
 
@@ -36,8 +37,8 @@ export class Game {
   }
 
   resetLevel() {
-    this.gridWidth = 40 + (this.level - 1) * 4;
-    this.gridHeight = 40 + (this.level % 2 === 0 ? 8 : 2);
+    this.gridWidth = 40;
+    this.gridHeight = 40;
     this.grid = [];
     this.enemies = [];
     this.greyEnemies = [];
@@ -377,18 +378,23 @@ export class Game {
     if (p.type === 'Heart') {
       this.lives++;
       this.activePowerUps.heartPopup = 3;
+      if (this.onGameUpdate) this.onGameUpdate("Extra Life Collected!", "#ff073a");
     } else if (p.type === 'S') {
       this.activePowerUps.enemySlow = 40;
+      if (this.onGameUpdate) this.onGameUpdate("Enemies Slowed!", "#00e5ff");
     } else if (p.type === 'A') {
       this.activePowerUps.playerSpeed = 40;
+      if (this.onGameUpdate) this.onGameUpdate("Speed Boost!", "#39ff14");
     } else if (p.type === 'x2') {
       this.activePowerUps.playerX2 = 40;
+      if (this.onGameUpdate) this.onGameUpdate("Double Size!", "#ffeb3b");
     } else if (p.type === 'Freeze') {
         this.activePowerUps.playerFreeze = 40; // 40 seconds
         let allEnemies = [...this.enemies, ...this.greyEnemies, ...this.bitingEnemies];
         if (this.eatingEnemies) allEnemies.push(...this.eatingEnemies);
         if (allEnemies.length > 0) {
           this.activePowerUps.frozenEnemy = allEnemies[Math.floor(Math.random() * allEnemies.length)];
+          if (this.onGameUpdate) this.onGameUpdate(`${this.activePowerUps.frozenEnemy.type} is frozen!`, "#88ccff");
         }
     }
   }

@@ -21,7 +21,12 @@
       <div>Score: <span id="score">0</span></div>
       <div>Lives: <span id="lives">3</span></div>
       <div>Progress: <span id="progress">0</span>%</div>
-      <div id="active-powerups"></div>
+      <div id="active-powerups" style="margin-top: 20px;">
+        <h3 style="margin: 0 0 10px 0; font-size: 20px; color: #ffeb3b; font-family: 'Courier New', monospace;">POWERUPS</h3>
+        <div id="powerup-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+      </div>
+    </div>
+    <div id="game-updates" style="position: absolute; top: 20px; right: 20px; width: 250px; display: flex; flex-direction: column; gap: 10px; pointer-events: none; z-index: 10; font-family: 'Courier New', monospace;">
     </div>
     <div id="stats-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; flex-direction: column;">
       <h1 class="retro-text" style="color: #ff0000; text-shadow: 4px 4px 0 #880000; font-size: 48px;">ROUND OVER</h1>

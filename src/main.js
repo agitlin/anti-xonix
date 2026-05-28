@@ -19,6 +19,20 @@ const uiGameOver = document.getElementById('game-over');
 const restartBtn = document.getElementById('restart-btn');
 const uiStatsOverlay = document.getElementById('stats-overlay');
 const uiCollisionMsg = document.getElementById('collision-msg');
+const activePowerupsContainer = document.getElementById('powerup-list');
+const gameUpdatesContainer = document.getElementById('game-updates');
+
+export function showGameUpdate(msg, color = '#ffffff') {
+  if (!gameUpdatesContainer) return;
+  const toast = document.createElement('div');
+  toast.className = 'game-update-toast';
+  toast.style.color = color;
+  toast.innerText = msg;
+  gameUpdatesContainer.appendChild(toast);
+  setTimeout(() => {
+    if (toast.parentNode) toast.parentNode.removeChild(toast);
+  }, 4000);
+}
 
 function populateStatsOverlay() {
   const statsBody = document.getElementById('stats-body');
@@ -143,7 +157,7 @@ light.position.set(10, 20, 10);
 scene.add(light);
 scene.add(new THREE.AmbientLight(0x404040));
 
-const activePowerupsContainer = document.getElementById('active-powerups');
+
 const powerUpMeshes = new Map();
 
 function getHexColorString(type) {
@@ -381,6 +395,7 @@ function updatePowerUpsHUD() {
 }
 
 let game = new Game();
+game.onGameUpdate = showGameUpdate;
 
 function getLevelColor(level) {
   const hue = ((level - 1) * 55) % 360; 
@@ -661,6 +676,7 @@ function animate() {
         game.eatingEnemies = game.eatingEnemies.filter(e => e !== frozen);
         game.roundStats.enemiesEliminated[frozen.type] = (game.roundStats.enemiesEliminated[frozen.type] || 0) + 1;
         game.score += 100;
+        showGameUpdate(`${frozen.type} is captured!`, "#ff9800");
         game.activePowerUps.frozenEnemy = null;
         game.activePowerUps.playerFreeze = 0;
       }
