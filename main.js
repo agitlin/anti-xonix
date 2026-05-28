@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { Game, CELL_EMPTY, CELL_FILLED, CELL_TRAIL } from './Game.js';
 import { Player } from './Player.js';
 import { Enemy, GreyEnemy, BitingEnemy, EatingEnemy } from './Enemy.js';
